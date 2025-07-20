@@ -9,7 +9,7 @@
 
 ---
 
-## What's in Version 2.0 Build 1.4
+## What's in Version 2.0 Build 1.5
 
 ### **🧠 Enhanced Smart Analysis System**
 - **Manual Smart Analysis Button** with immediate comprehensive results (bypasses 3-second auto-analysis delay)
@@ -228,7 +228,7 @@ Signaro maintains the highest security standards with enterprise-grade protectio
 
 ## Version Information
 
-- **Current Version**: 2.0 Build 1.4
+- **Current Version**: 2.0 Build 1.5
 - **Release**: 2025
 - **Platform**: macOS (Universal Binary - Apple Silicon & Intel)
 - **Architecture**: Modern SwiftUI with enterprise-grade code documentation
