@@ -1,4 +1,4 @@
-# Bug Found hope to have a update fix soon. (need more testing to confirm fixed)
+# (Need more testing to confirm fixed)
 
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
