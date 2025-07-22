@@ -1,4 +1,4 @@
-# (Need more testing to confirm fixed)
+# (testing to confirm fixed) -Let me know
 
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
