@@ -9,7 +9,10 @@
 
 ---
 
-## What's in Version 2.0 Build 1.5
+## What's in Version 2.0 Build 1.7
+
+Added the option to **Remove Extended Attributes
+- Fix DMG support
 
 ### **🧠 Enhanced Smart Analysis System**
 - **Manual Smart Analysis Button** with immediate comprehensive results (bypasses 3-second auto-analysis delay)
