@@ -363,7 +363,7 @@ Signaro maintains the highest security standards with enterprise-grade protectio
 - **Current Version**: 3.0 Build 1.0
 - **Release**: 2025
 - **Platform**: macOS (Universal Binary - Apple Silicon & Intel)
-- **License**: Open Source
+- **License**: Free
 - **Support**: Community-driven with comprehensive documentation
 - **Architecture**: Modern SwiftUI with enterprise-grade code documentation, advanced logging system, working folders, and professional DMG creation
 
