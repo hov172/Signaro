@@ -2,13 +2,13 @@
 
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
-**Signaro** is a completely rewritten, modern, privacy-focused macOS app for signing, unsigning, **notarizing**, and comprehensively analyzing `.pkg`, `.app`, and `.mobileconfig` files. With an intuitive drag & drop interface, advanced signature analysis, smart certificate recommendations, seamless Apple notarization integration, **comprehensive extended attributes cleaning**, **advanced persistent logging system**, **working folders project management**, **professional DMG creation**, and **comprehensive code documentation**, Signaro is the ultimate tool for developers, IT administrators, and security professionals.
+**Signaro** is a completely rewritten, modern, privacy-focused macOS app for signing, unsigning, **notarizing**, and comprehensively analyzing `.pkg`, `.app`, and `.mobileconfig` files. With an intuitive drag & drop interface, advanced signature analysis, smart certificate recommendations, seamless Apple notarization integration, **comprehensive extended attributes cleaning**, **advanced persistent logging system**, **working folders project management**, **professional DMG creation**, **intelligent notarization requirements validation**, and **comprehensive code documentation**, Signaro is the ultimate tool for developers, IT administrators, and security professionals.
 
 > **Current Status**: Feature-complete core functionality with ongoing enhancements. See [roadmap](#roadmap) for upcoming features.
 
 ---
 
-## What's New in Version 2.5 Build 1.1
+## What's New in Version 2.5 Build 1.2
 
 ### Bug Fixes & Improvements
 - **Fixed file removal functionality** — Red X buttons now properly show confirmation dialogs and remove files from selection
@@ -27,7 +27,7 @@
 - **Project-based organization** — Group related files together into working folders for batch operations and project management
 - **Persistent folder management** with automatic status tracking across all files in each folder
 - **Smart file organization** with auto-suggested folder names based on file locations and naming patterns
-- **Batch operations** perform signing, notarization, and analysis operations on entire working folders
+- **Batch operations** perform signing, notarization, analysis, and DMG creation on entire working folders
 - **Working folder status aggregation** showing overall project readiness and completion status
 - **Export configuration** functionality for sharing working folder setups with team members
 - **Comprehensive logging integration** with all working folder operations automatically logged for audit trails
@@ -37,18 +37,18 @@
 ### Professional DMG Creation System
 - **Complete DMG creation workflow** with support for multiple formats (compressed, read/write, read-only, highly compressed)
 - **Advanced DMG options** including encryption (AES-128/256), segmentation for large files, and custom background images
-- **App distribution DMGs** with Applications folder aliases and professional drag-and-drop installation layouts
+- **App distribution DMGs** with professional drag-and-drop layouts including Applications folder aliases
 - **Multi-file DMG creation** from selected file collections with automatic staging and organization
 - **Blank DMG creation** for working disk images with user-specified sizes
 - **Professional layout customization** with custom icon positioning, window sizing, and background images
 - **Volume naming intelligence** with automatic name generation based on source content
-- **Size calculation and optimization** with automatic size estimation and compression recommendations
+- **Size calculation and optimization** with automatic size estimation, compression recommendations, and space efficiency analysis
 - **Complete operation logging** with detailed DMG creation logs including command-line calls and processing times
 - **Encryption support** with password protection using industry-standard AES encryption
 
 ### App Distribution Workflow
 - **End-to-end distribution preparation** from source app to ready-to-distribute DMG with signing and notarization
-- **Automated workflow orchestration** combining signing, notarization, stapling, and DMG creation in a single process
+- **Automated workflow orchestration** combining signing, notarization, stapling, and professional DMG creation in a single process
 - **Distribution readiness validation** ensuring apps meet all Apple distribution requirements before DMG creation
 - **Professional DMG layouts** with Applications folder shortcuts and custom branding support
 - **Workflow templates** for common distribution scenarios (Mac App Store, direct distribution, enterprise deployment)
@@ -149,6 +149,18 @@
 - **Real-time signature verification** with detailed status reporting and error diagnosis
 - **Comprehensive error handling** with recovery suggestions and troubleshooting guidance
 
+### Intelligent Notarization Requirements Validation
+- **Pre-flight validation system** — Comprehensive analysis of files before notarization submission to identify potential issues
+- **Dual validation modes** offering both Quick (basic checks) and Detailed (comprehensive analysis) validation options
+- **Smart readiness assessment** with percentage-based scoring and clear visual indicators of notarization preparedness
+- **Professional results presentation** with summary banners and expandable details for technical deep-dive analysis
+- **Already-notarized detection** — Intelligent identification of files that have already been notarized with appropriate next-step recommendations
+- **Certificate compatibility validation** ensuring selected certificates are appropriate for the specific file types being processed
+- **Interactive requirements checking** with one-click validation and real-time results for immediate feedback
+- **Educational validation assistance** — Built-in explanations of Apple's notarization requirements and validation mode differences
+- **Batch validation support** for simultaneous assessment of multiple files with aggregated project-level results
+- **Validation analytics and logging** — Complete tracking of validation operations with detailed metrics and professional reporting
+
 ### Working Folders Project Management
 - **Project-based file organization** — Group related files into working folders for unified management and batch operations
 - **Persistent project storage** with automatic status tracking and progress monitoring across all files in each project
@@ -180,7 +192,7 @@
 - **Workflow templates** for common distribution scenarios (Mac App Store preparation, direct distribution, enterprise deployment)
 - **Comprehensive progress tracking** with detailed status updates throughout the entire distribution preparation process
 - **Multi-stage validation** checking code signing status, notarization completion, and distribution compliance requirements
-- **One-click distribution** preparation from unsigned app to distribution-ready DMG with complete audit logging and professional presentation
+- **One-click distribution preparation** from unsigned app to distribution-ready DMG with complete audit logging and professional presentation
 
 ### Universal Extended Attributes Management
 - **Unified cleaning system** — Works seamlessly with individual files, working folders, and DMG creation workflows
@@ -207,16 +219,16 @@
 - **Complete operation logging** with Apple responses, Request UUIDs, and comprehensive metadata automatically captured
 
 ### Advanced Persistent Logging
-- **Comprehensive operation tracking** — All signing, notarization, stapling, analysis, working folder, and DMG creation operations automatically logged
+- **Comprehensive operation tracking** — All signing, notarization, stapling, analysis, working folder, DMG creation, and validation operations automatically logged
 - **Complete submission details** — Full command-line calls, Apple responses, Request UUIDs, exit codes, and processing times
-- **Rich metadata capture** including file checksums, device information, operation context, working folder configurations, and detailed timestamps
+- **Rich metadata capture** including file checksums, device information, operation context, working folder configurations, validation results, and detailed timestamps
 - **Daily log rotation** with automatic cleanup and size management (30-day retention, 10MB file limit)
 - **Advanced log viewer** with search functionality, filtering, and professional export capabilities
 - **Security-focused design** with automatic credential masking and secure storage in ~/Documents/Signaro Logs/
 - **Thread-safe logging** ensuring data integrity during concurrent operations and batch processing
 - **Audit trail generation** perfect for enterprise compliance, debugging, and Apple Support communication
 - **Export functionality** with professional formatting for sharing with teams or Apple Support
-- **Log statistics dashboard** showing success rates, operation trends, historical analytics, and workflow performance
+- **Log statistics dashboard** showing success rates, operation trends, historical analytics, validation metrics, and workflow performance
 - **Instant access** via toolbar "View Logs" button for immediate troubleshooting and operation history
 
 ### Certificate Management
@@ -249,14 +261,27 @@
 ## Screenshots & Interface Overview
 
 ### Main Interface
-*[Screenshot: Main application window showing complete workflow with working folders]*
+*[Screenshot: Main application window showing complete workflow with notarization validation]*
+- Notarization requirements validation with dual-mode selection (Quick/Detailed)
+- Professional validation results banner with expandable details and readiness scoring
 - Working folders mode toggle for switching between individual and project-based workflows
 - Certificate selection dropdown with intelligent recommendations and extended attributes cleaning toggle
 - File list with drag & drop support, working folder organization, and sorting options
-- Operation buttons (Sign, Unsign, Analyze, Notarize, Create DMG, Check Attributes) with status indicators
+- Operation buttons (Sign, Unsign, Analyze, Notarize, Check Requirements, Create DMG) with status indicators
 - Real-time file signature analysis and validation results
+- **"Check Requirements" button in toolbar** for instant notarization readiness assessment
 - **Working folder status banner** showing project-level progress and completion status
 - **"View Logs" button in toolbar** for instant access to comprehensive operation history
+
+### Notarization Requirements Validation
+*[Screenshot: Validation interface showing comprehensive requirements analysis]*
+- **Validation mode selector** with Quick (minimal, fast) and Detailed (comprehensive) options
+- **Professional results banner** with visual readiness indicators and percentage scoring
+- **Expandable details interface** showing critical issues, recommendations, and technical analysis
+- **Already-notarized detection** with appropriate next-step guidance
+- **Certificate compatibility assessment** with specific recommendations for file types
+- **Interactive help system** explaining validation modes and Apple requirements
+- **Progress indicators** during validation operations with real-time status updates
 
 ### Working Folders Management
 *[Screenshot: Working folders interface showing project organization]*
@@ -282,15 +307,15 @@
 - **Distribution readiness validation** with comprehensive requirement checking
 - **Workflow progress tracking** with detailed status updates at each stage
 - **Professional DMG preview** showing final distribution layout and presentation
-- **One-click distribution** preparation with complete automation and logging
+- **One-click distribution preparation** with complete automation and logging
 
 ### Enhanced Logging System
-*[Screenshot: Advanced log viewer showing comprehensive operation history with new features]*
+*[Screenshot: Advanced log viewer showing comprehensive operation history with validation logging]*
 - **Log file browser** with chronological organization, operation type filtering, and metadata display
-- **Rich log content** showing complete command-line calls, Apple responses, Request UUIDs, and working folder operations
-- **Enhanced search and filtering** capabilities for finding specific operations, projects, or troubleshooting issues
+- **Rich log content** showing complete command-line calls, Apple responses, Request UUIDs, validation results, and working folder operations
+- **Enhanced search and filtering** capabilities for finding specific operations, projects, validation results, or troubleshooting issues
 - **Export functionality** for sharing logs with Apple Support or team collaboration
-- **Statistics dashboard** showing success rates, operation counts, working folder analytics, and DMG creation metrics
+- **Statistics dashboard** showing success rates, operation counts, working folder analytics, validation metrics, and DMG creation statistics
 - **Professional formatting** suitable for enterprise documentation and compliance reporting
 
 ### Extended Attributes Management
@@ -324,9 +349,9 @@
 ## Security & Privacy
 
 Signaro maintains the highest security standards with enterprise-grade protection:
-- **Local operations only** — All signing, analysis, extended attributes, working folder, and DMG operations happen on your Mac with no external data transmission
+- **Local operations only** — All signing, analysis, extended attributes, working folder, validation, and DMG operations happen on your Mac with no external data transmission
 - **Secure keychain integration** — Certificate access through macOS Keychain with proper permissions
-- **No data collection** — Your files, working folders, and certificates never leave your device (except for Apple notarization)
+- **No data collection** — Your files, working folders, validation results, and certificates never leave your device (except for Apple notarization)
 - **Encrypted credential handling** — Notarization credentials stored in memory only with secure cleanup
 - **Apple tool integration** — Uses official Apple command-line tools (codesign, pkgutil, notarytool, stapler, xattr, hdiutil)
 - **Safe extended attributes handling** — Only removes problematic attributes with user consent and comprehensive logging
@@ -337,35 +362,36 @@ Signaro maintains the highest security standards with enterprise-grade protectio
 - **Thread-safe logging** — Concurrent operations safely logged without data corruption or race conditions
 - **Working folder security** — Project configurations stored locally with no external synchronization
 - **DMG creation security** — All disk image operations performed locally using Apple's secure hdiutil framework
+- **Validation privacy** — All requirements validation performed locally with no external service communication
 
 ---
 
 ## Perfect For
 
-- **iOS/macOS Developers** — Complete development workflow from signing to distribution-ready DMGs with working folders project organization, automatic extended attributes cleaning, and comprehensive audit logging
-- **IT Administrators** — Manage configuration profiles and installer packages with enterprise features, working folder organization, professional DMG creation, and detailed operation logs for compliance
-- **Enterprise Teams** — Ensure consistent signing and notarization across projects with team coordination tools, working folder sharing, unified extended attributes management, and comprehensive audit trails
-- **Security Professionals** — Verify and analyze file signatures with detailed security assessment, metadata analysis, working folder project tracking, and complete operation logging for forensic analysis
-- **Independent Developers** — Professional-grade signing, notarization, and DMG creation without complexity, with working folder organization, automatic handling of common file issues, and detailed logs for Apple Support communication
-- **DevOps Engineers** — Integrate signing, notarization, and distribution operations into automated workflows and CI/CD pipelines with working folder batch processing, reliable extended attributes handling, and comprehensive logging for build process tracking
+- **iOS/macOS Developers** — Complete development workflow from signing to distribution-ready DMGs with working folders project organization, intelligent notarization validation, automatic extended attributes cleaning, and comprehensive audit logging
+- **IT Administrators** — Manage configuration profiles and installer packages with enterprise features, working folder organization, pre-flight validation, professional DMG creation, and detailed operation logs for compliance
+- **Enterprise Teams** — Ensure consistent signing and notarization across projects with team coordination tools, working folder sharing, validation standardization, unified extended attributes management, and comprehensive audit trails
+- **Security Professionals** — Verify and analyze file signatures with detailed security assessment, validation requirements checking, metadata analysis, working folder project tracking, and complete operation logging for forensic analysis
+- **Independent Developers** — Professional-grade signing, notarization, and DMG creation without complexity, with working folder organization, intelligent validation, automatic handling of common file issues, and detailed logs for Apple Support communication
+- **DevOps Engineers** — Integrate signing, notarization, and distribution operations into automated workflows and CI/CD pipelines with working folder batch processing, validation automation, reliable extended attributes handling, and comprehensive logging for build process tracking
 
 ---
 
 ## Credits & Acknowledgments
 
-- **Jesus Ayala**, Ayala Solutions (2025)
+- **Jesus Ayala**: Ayala Solutions (2025)
 - **Inspiration**: Open MacAdmins community and feedback from real-world usage
 
 ---
 
 ## Version Information
 
-- **Current Version**: 3.0 Build 1.0
+- **Current Version**: 2.5 Build 1.2
 - **Release**: 2025
 - **Platform**: macOS (Universal Binary - Apple Silicon & Intel)
 - **License**: Free
 - **Support**: Community-driven with comprehensive documentation
-- **Architecture**: Modern SwiftUI with enterprise-grade code documentation, advanced logging system, working folders, and professional DMG creation
+- **Architecture**: Modern SwiftUI with enterprise-grade code documentation, advanced logging system, working folders, professional DMG creation, and intelligent validation systems
 
 ## Alternative Tools
 
