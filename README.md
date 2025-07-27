@@ -2,26 +2,82 @@
 
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
-**Signaro** is a completely rewritten, modern, privacy-focused macOS app for signing, unsigning, **notarizing**, and comprehensively analyzing `.pkg`, `.app`, and `.mobileconfig` files. With an intuitive drag & drop interface, advanced signature analysis, smart certificate recommendations, seamless Apple notarization integration, **comprehensive extended attributes cleaning**, **advanced persistent logging system**, **working folders project management**, **professional DMG creation**, **intelligent notarization requirements validation**, and **comprehensive code documentation**, Signaro is the ultimate tool for developers, IT administrators, and security professionals.
+**Signaro** is a completely rewritten, modern, privacy-focused macOS app for signing, unsigning, **notarizing**, and comprehensively analyzing `.pkg`, `.app`, and `.mobileconfig` files. With an intuitive drag & drop interface, advanced signature analysis, smart certificate recommendations, seamless Apple notarization integration, **comprehensive extended attributes cleaning**, **advanced persistent logging system**, **working folders project management**, **professional DMG creation**, **intelligent notarization requirements validation**, **modular MVVM architecture for enhanced performance**, and **comprehensive code documentation**, Signaro is the ultimate tool for developers, IT administrators, and security professionals.
 
 > **Current Status**: Feature-complete core functionality with ongoing enhancements. See [roadmap](#roadmap) for upcoming features.
 
 ---
 
-## What's New in Version 2.5 Build 1.2
+## What's New in Version 2.5 Build 1.4
 
-### Bug Fixes & Improvements
+### Critical Bug Fixes & Stability Improvements
+- **Fixed file removal functionality** — Resolved issues with red X buttons not properly showing confirmation dialogs and removing files from selection
+- **Enhanced alert system reliability** — Improved alert handling for file removal confirmations and general notifications with better error recovery
+- **Improved state management consistency** — File removal now properly cleans up all associated data including signatures, analysis results, and UI state
+- **Better user feedback mechanisms** — Clear confirmation dialogs with accurate file count display and proper cancel/confirm options
+- **Automatic UI updates after operations** — File analysis and status information automatically refreshes after file removal operations
+
+### Workflow Optimization Updates
+- **Enhanced file management workflow** — Streamlined file selection and removal process with better visual feedback
+- **Improved batch operation reliability** — More consistent behavior when working with multiple files in working folders
+- **Better error handling and recovery** — Enhanced error messages and recovery suggestions for common workflow issues
+- **Optimized memory management** — Reduced memory usage during large file operations and extended analysis sessions
+- **Performance improvements** — Faster UI updates and more responsive user interactions across all workflows
+
+### User Experience Enhancements
+- **Refined confirmation dialogs** — More intuitive and accessible confirmation flows for destructive operations
+- **Better visual state indicators** — Clearer visual feedback for file states, operation progress, and completion status
+- **Enhanced accessibility support** — Improved VoiceOver compatibility and keyboard navigation for all new features
+- **Streamlined working folder operations** — More consistent behavior when adding/removing files from working folder projects
+- **Professional error messaging** — Clear, actionable error messages with specific troubleshooting guidance
+
+### Technical Infrastructure Improvements
+- **Robust state synchronization** — Enhanced state management ensuring UI consistency across all operations
+- **Memory leak prevention** — Improved memory management patterns preventing accumulation during extended usage
+- **Thread safety enhancements** — Better concurrent operation handling for file management and analysis tasks
+- **Data integrity validation** — Enhanced validation to prevent inconsistent states during file operations
+- **Logging system improvements** — More detailed operation logging for better debugging and support
+
+---
+
+## What's New in Version 2.5 Build 1.3
+
+### Major Architecture Refactoring for Enhanced Performance
+- **Modular MVVM Architecture** — Complete refactoring of MainContentView (~1000+ lines) into focused, maintainable components
+- **Dramatically Improved Build Times** — Modular architecture means only changed files need recompilation, reducing development iteration time
+- **Enhanced Code Maintainability** — Clear separation of concerns makes code easier to understand, modify, and debug
+- **Better Team Collaboration** — Multiple developers can work on different components without conflicts
+- **Improved Testability** — ViewModels and Managers can be unit tested independently for better code quality
+- **Future-Proof Architecture** — Scalable foundation for new features and enhancements
+
+### New Architectural Components
+- **MainContentViewModel** — Centralized state management with all UI state and computed properties
+- **FileOperationsManager** — Dedicated manager for file signature analysis and smart analysis logic
+- **SigningOperationsManager** — Specialized manager for code signing and unsigning operations
+- **ValidationManager** — Focused manager for notarization requirements validation logic
+- **Modular UI Components** — Reusable view components (ValidationModePickerView, FileListContainerView, MainContentToolbar, NotarizationValidationBannerView)
+
+### Performance & Development Improvements
+- **Faster Compilation** — Reduced MainContentView from ~1000+ lines to ~400 lines with distributed logic
+- **Optimized Memory Usage** — Better state management and object lifecycle handling
+- **Enhanced Error Handling** — Centralized error management with consistent user feedback
+- **Improved Code Reusability** — Managers can be reused across different views and contexts
+- **Better Debugging Experience** — Modular architecture makes issues easier to isolate and fix
+- **Professional Code Organization** — Enterprise-grade architecture patterns for long-term maintainability
+
+### Technical Enhancements
+- **Async/Await Pattern Consistency** — Improved async operations handling across all managers
+- **State Management Optimization** — Centralized @Published properties with efficient updates
+- **Dependency Injection** — Proper dependency management for better testing and flexibility
+- **Task-Based Concurrency** — Modern Swift concurrency patterns for file operations
+- **Enhanced Code Documentation** — Comprehensive inline documentation for all new components
+
+### Bug Fixes & Improvements 
 - **Fixed file removal functionality** — Red X buttons now properly show confirmation dialogs and remove files from selection
 - **Enhanced alert system** — Added comprehensive alert handling for file removal confirmations and general notifications
 - **Improved state management** — File removal now properly cleans up all associated data including signatures, analysis results, and UI state
 - **Better user feedback** — Clear confirmation dialogs with file count display and proper cancel/confirm options
 - **Automatic UI updates** — File analysis and status information automatically refreshes after file removal operations
-
-### Technical Improvements
-- **Complete alert system implementation** — Added missing alert modifiers for file removal and general notifications
-- **Enhanced data cleanup** — File removal operations now properly clean up fileSignatures, fileExpandedState, and selectedForRemoval collections
-- **Improved error handling** — Better user feedback and state management throughout the application
-- **Consistent UI behavior** — File removal operations now maintain consistent behavior across all interface components
 
 ### Working Folders System
 - **Project-based organization** — Group related files together into working folders for batch operations and project management
@@ -64,77 +120,6 @@
 - **Advanced log organization** with operation-type filtering and project-based log grouping
 - **Export improvements** with workflow-specific log exports and enhanced formatting for professional documentation
 - **Statistics enhancements** showing distribution workflow success rates, DMG creation metrics, and working folder analytics
-
-### Universal Extended Attributes Management
-- **Working folder integration** — Extended attributes cleaning now works seamlessly with working folder batch operations
-- **DMG preparation cleaning** — Automatic extended attributes cleaning before DMG creation to prevent common issues
-- **Distribution workflow integration** — Extended attributes cleaning integrated into complete app distribution workflows
-- **Enhanced diagnostic tools** with working folder-level extended attributes analysis and batch cleaning capabilities
-- **Improved success rates** for both individual files and entire working folder projects through consistent attribute management
-
-### Advanced File Analysis
-- **Working folder analysis** with project-level status aggregation and batch file analysis capabilities
-- **Distribution readiness assessment** evaluating complete app distribution workflows including signing, notarization, and packaging requirements
-- **Project-level recommendations** providing guidance for entire working folders rather than just individual files
-- **Enhanced certificate analysis** with working folder-level certificate consistency checking and project recommendations
-- **Comprehensive workflow validation** ensuring complete distribution workflows meet all Apple requirements
-
-### Intelligent Workflow Management
-- **Context-aware recommendations** based on selected files, working folder configurations, and intended distribution methods
-- **Workflow templates** for common scenarios (individual file signing, project-based distribution, enterprise deployment)
-- **Smart defaults** that adapt based on file types, certificate availability, and project organization
-- **Progressive workflow assistance** guiding users through complex multi-step distribution preparation processes
-- **Educational workflow modes** helping users learn Apple's distribution requirements and best practices
-
-### Enhanced User Interface
-- **Working folders mode toggle** seamlessly switching between individual file management and project-based workflows
-- **DMG creation interface** with advanced options, format selection, and professional customization settings
-- **Distribution workflow dialogs** providing step-by-step guidance through complete distribution preparation
-- **Enhanced file management** with working folder organization, drag-and-drop batch operations, and project status visualization
-- **Professional workflow indicators** showing distribution readiness, project completion status, and workflow progress
-- **Advanced help system** covering working folders, DMG creation, and complete distribution workflows
-
----
-
-## What's in Version 2.0 Build 1.7 *(Previous Features)*
-
-### Advanced Persistent Logging System
-- **Complete operation history** — Persistent logging of all signing, analysis, and notarization operations with Apple responses
-- **Comprehensive submission details** — Full command-line calls, Apple responses, Request UUIDs, and processing times automatically logged
-- **Rich metadata capture** including file checksums, device information (macOS version, Xcode version, CPU architecture), and operation context
-- **Daily log rotation** with automatic cleanup (30-day retention) and file size management to prevent storage issues
-- **Advanced log viewer** with search functionality, export capabilities, and professional formatting for enterprise documentation
-- **Secure credential handling** with automatic password masking in all log entries for privacy and security
-- **Thread-safe logging** with queue-based operations ensuring data integrity during concurrent operations
-- **Comprehensive operation coverage** — Logs signing, unsigning, notarization, stapling, status checks, and Smart Analysis operations
-- **Audit trail generation** with detailed timestamps, session IDs, and complete workflow documentation for compliance and debugging
-- **Export functionality** for sharing logs with Apple Support or team members with professional formatting
-- **Log statistics and analytics** showing success rates, operation counts, and historical trends
-
-### Comprehensive Extended Attributes Cleaning System
-- **Universal cleaning integration** — Extended attributes cleaning now works for **both Code Signing AND Apple Notarization** operations
-- **Automatic cleaning** of problematic extended attributes before signing and notarization operations
-- **User-controlled preference** to enable/disable extended attributes cleaning (enabled by default)
-- **Consistent workflow experience** — Same cleaning behavior applies to both local signing and Apple notarization
-- **Diagnostic tools** to check and analyze extended attributes that may interfere with signing or notarization
-- **Manual cleaning capabilities** for troubleshooting and preparation workflows
-- **Comprehensive logging** showing what attributes were cleaned and operation results
-- **Prevention of common failures** caused by quarantine attributes, resource forks, and Finder metadata in both signing and notarization workflows
-- **Enhanced notarization success rates** by removing problematic attributes before submission to Apple
-
-### Enhanced Operation Results Management
-- **Smart results reset** — Operation results automatically clear when files are added or removed from selection
-- **Clean UI state** — Results always match current file selection, eliminating confusion
-- **Consistent experience** — Results reset applies to both signing operations and notarization workflows
-- **Better workflow management** — Encourages users to review results immediately after operations
-
-### Enhanced Smart Analysis System
-- **Manual Smart Analysis Button** with immediate comprehensive results (bypasses 3-second auto-analysis delay)
-- **Force Refresh Capabilities** that clear all cached data for completely fresh analysis
-- **Network-dependent validation** with certificate revocation checking and OCSP verification
-- **Certificate compatibility re-analysis** when certificate selection changes
-- **Deep debugging support** with enhanced error reporting and diagnostics
-- **Educational exploration mode** for learning code signing concepts
 
 ---
 
@@ -221,7 +206,7 @@
 ### Advanced Persistent Logging
 - **Comprehensive operation tracking** — All signing, notarization, stapling, analysis, working folder, DMG creation, and validation operations automatically logged
 - **Complete submission details** — Full command-line calls, Apple responses, Request UUIDs, exit codes, and processing times
-- **Rich metadata capture** including file checksums, device information, operation context, working folder configurations, validation results, and detailed timestamps
+- **Rich metadata collection** including file checksums, device information, operation context, working folder configurations, validation results, and detailed timestamps
 - **Daily log rotation** with automatic cleanup and size management (30-day retention, 10MB file limit)
 - **Advanced log viewer** with search functionality, filtering, and professional export capabilities
 - **Security-focused design** with automatic credential masking and secure storage in ~/Documents/Signaro Logs/
@@ -250,6 +235,7 @@
 
 ### Professional UI & UX
 - **Modern SwiftUI interface** with native macOS design patterns and animations
+- **Modular MVVM architecture** for enhanced performance and maintainability
 - **Comprehensive accessibility support** with VoiceOver compatibility and keyboard navigation
 - **Intelligent keyboard shortcuts** for efficient workflow and power user features
 - **Responsive layout design** with resizable windows and adaptive content
@@ -363,35 +349,31 @@ Signaro maintains the highest security standards with enterprise-grade protectio
 - **Working folder security** — Project configurations stored locally with no external synchronization
 - **DMG creation security** — All disk image operations performed locally using Apple's secure hdiutil framework
 - **Validation privacy** — All requirements validation performed locally with no external service communication
+- **Modular architecture security** — Enhanced security through separation of concerns and proper access control
 
 ---
 
 ## Perfect For
 
-- **iOS/macOS Developers** — Complete development workflow from signing to distribution-ready DMGs with working folders project organization, intelligent notarization validation, automatic extended attributes cleaning, and comprehensive audit logging
-- **IT Administrators** — Manage configuration profiles and installer packages with enterprise features, working folder organization, pre-flight validation, professional DMG creation, and detailed operation logs for compliance
-- **Enterprise Teams** — Ensure consistent signing and notarization across projects with team coordination tools, working folder sharing, validation standardization, unified extended attributes management, and comprehensive audit trails
-- **Security Professionals** — Verify and analyze file signatures with detailed security assessment, validation requirements checking, metadata analysis, working folder project tracking, and complete operation logging for forensic analysis
-- **Independent Developers** — Professional-grade signing, notarization, and DMG creation without complexity, with working folder organization, intelligent validation, automatic handling of common file issues, and detailed logs for Apple Support communication
-- **DevOps Engineers** — Integrate signing, notarization, and distribution operations into automated workflows and CI/CD pipelines with working folder batch processing, validation automation, reliable extended attributes handling, and comprehensive logging for build process tracking
-
----
-
-## Credits & Acknowledgments
-
-- **Jesus Ayala**: Ayala Solutions (2025)
-- **Inspiration**: Open MacAdmins community and feedback from real-world usage
+- **iOS/macOS Developers** — Complete development workflow from signing to distribution-ready DMGs with working folders project organization, intelligent notarization validation, automatic extended attributes cleaning, modular architecture for customization, and comprehensive audit logging
+- **IT Administrators** — Manage configuration profiles and installer packages with enterprise features, working folder organization, pre-flight validation, professional DMG creation, enhanced performance, and detailed operation logs for compliance
+- **Enterprise Teams** — Ensure consistent signing and notarization across projects with team coordination tools, working folder sharing, validation standardization, unified extended attributes management, improved build times, and comprehensive audit trails
+- **Security Professionals** — Verify and analyze file signatures with detailed security assessment, validation requirements checking, metadata analysis, working folder project tracking, enhanced debugging capabilities, and complete operation logging for forensic analysis
+- **Independent Developers** — Professional-grade signing, notarization, and DMG creation without complexity, with working folder organization, intelligent validation, automatic handling of common file issues, faster development iteration, and detailed logs for Apple Support communication
+- **DevOps Engineers** — Integrate signing, notarization, and distribution operations into automated workflows and CI/CD pipelines with working folder batch processing, validation automation, reliable extended attributes handling, modular architecture for integration, and comprehensive logging for build process tracking
 
 ---
 
 ## Version Information
 
-- **Current Version**: 2.5 Build 1.2
+- **Current Version**: 2.5 Build 1.4
 - **Release**: 2025
 - **Platform**: macOS (Universal Binary - Apple Silicon & Intel)
 - **License**: Free
 - **Support**: Community-driven with comprehensive documentation
-- **Architecture**: Modern SwiftUI with enterprise-grade code documentation, advanced logging system, working folders, professional DMG creation, and intelligent validation systems
+- **Architecture**: Modern SwiftUI with modular MVVM architecture, enterprise-grade code documentation, advanced logging system, working folders, professional DMG creation, and intelligent validation systems
+
+---
 
 ## Alternative Tools
 
