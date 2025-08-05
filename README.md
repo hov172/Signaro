@@ -1,5 +1,3 @@
-# Still testing - Let me know of issues.
-
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
 **Signaro** is a completely rewritten, modern, privacy-focused macOS app for signing, unsigning, **notarizing**, and comprehensively analyzing `.pkg`, `.app`, and `.mobileconfig` files. With an intuitive drag & drop interface, advanced signature analysis, smart certificate recommendations, seamless Apple notarization integration, **comprehensive extended attributes cleaning**, **advanced persistent logging system**, **working folders project management**, **professional DMG creation**, **intelligent notarization requirements validation**, **modular MVVM architecture for enhanced performance**, and **comprehensive code documentation**, Signaro is the ultimate tool for developers, IT administrators, and security professionals.
