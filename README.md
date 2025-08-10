@@ -6,118 +6,57 @@
 
 ---
 
-## What's New in Version 2.5 Build 1.4
+## What's New in Version 2.6 Build 1.1
 
-### Critical Bug Fixes & Stability Improvements
-- **Fixed file removal functionality** — Resolved issues with red X buttons not properly showing confirmation dialogs and removing files from selection
-- **Enhanced alert system reliability** — Improved alert handling for file removal confirmations and general notifications with better error recovery
-- **Improved state management consistency** — File removal now properly cleans up all associated data including signatures, analysis results, and UI state
-- **Better user feedback mechanisms** — Clear confirmation dialogs with accurate file count display and proper cancel/confirm options
-- **Automatic UI updates after operations** — File analysis and status information automatically refreshes after file removal operations
+### Reliability and Bug Fixes
+- Resolved intermittent crashes during batch unsign/sign operations on nested bundles
+- Fixed an issue where file list selections could desync after rapid add/remove actions
+- Corrected notarization status parsing for certain stapled apps where spctl output varied by macOS version
+- Fixed DMG creation failures when background images contained spaces or non-ASCII characters
+- Eliminated duplicate working folder entries caused by rapid re-importing of the same paths
 
-### Workflow Optimization Updates
-- **Enhanced file management workflow** — Streamlined file selection and removal process with better visual feedback
-- **Improved batch operation reliability** — More consistent behavior when working with multiple files in working folders
-- **Better error handling and recovery** — Enhanced error messages and recovery suggestions for common workflow issues
-- **Optimized memory management** — Reduced memory usage during large file operations and extended analysis sessions
-- **Performance improvements** — Faster UI updates and more responsive user interactions across all workflows
+### UX and Accessibility
+- Improved confirmation dialogs with clearer action verbs and consistent button ordering
+- Better keyboard navigation across toolbar and dialogs, plus refined VoiceOver labels
+- Streamlined error messages with actionable next steps and compact technical detail sections
+- Smarter certificate picker hints that reflect current selection context and file types
 
-### User Experience Enhancements
-- **Refined confirmation dialogs** — More intuitive and accessible confirmation flows for destructive operations
-- **Better visual state indicators** — Clearer visual feedback for file states, operation progress, and completion status
-- **Enhanced accessibility support** — Improved VoiceOver compatibility and keyboard navigation for all new features
-- **Streamlined working folder operations** — More consistent behavior when adding/removing files from working folder projects
-- **Professional error messaging** — Clear, actionable error messages with specific troubleshooting guidance
+### Performance and Concurrency
+- Faster large-batch analysis through improved task scheduling and cancellation behavior
+- Reduced memory footprint during extended operations and long-running sessions
+- Optimized log viewer loading and search performance for large log archives
+- Improved responsiveness of progress indicators and list updates under heavy load
 
-### Technical Infrastructure Improvements
-- **Robust state synchronization** — Enhanced state management ensuring UI consistency across all operations
-- **Memory leak prevention** — Improved memory management patterns preventing accumulation during extended usage
-- **Thread safety enhancements** — Better concurrent operation handling for file management and analysis tasks
-- **Data integrity validation** — Enhanced validation to prevent inconsistent states during file operations
-- **Logging system improvements** — More detailed operation logging for better debugging and support
+### Workflow Fixes and Options
+- New batch options for all workflows:
+  - Skip already processed items (already signed/notarized/stapled)
+  - Auto-staple after notarization
+  - Auto-create DMG after successful stapling with selectable layout presets
+  - Validate-only dry run (no signing/notarization changes)
+  - Per-run override for extended attributes cleaning
+- Queue management improvements: reliable cancel, retry, and resume with accurate progress
+- Fixed stuck states after cancellations, notarytool timeouts, or transient network errors
+- Correct toolbar/state enablement during long-running workflows and after mode toggles
+- Accurate progress totals and completion banners for mixed-success batches
+- Working folders: consistent batch counts, proper aggregation across nested items, and safer re-run behavior
 
----
+### Signing and Notarization Enhancements
+- More resilient stapling and verification workflow with automatic fallback checks
+- Hardened Runtime and entitlements checks provide clearer recommendations in validation results
+- Better pre-flight extended attributes handling for higher notarization success rates
+- Enhanced certificate trust validation with clearer indicators for untrusted/expired identities
+- New Advanced Timing controls for notarization polling and stapler backoff with presets (Aggressive, Balanced, Conservative/CI) and a Reset Defaults option
 
-## What's New in Version 2.5 Build 1.3
+### DMG Creation and Distribution
+- Safer volume naming and path sanitation to prevent hdiutil edge-case failures
+- Improved Applications alias handling and layout persistence for distribution DMGs
+- Clearer guidance for encryption/segmentation options with validation before execution
 
-### Major Architecture Refactoring for Enhanced Performance
-- **Modular MVVM Architecture** — Complete refactoring of MainContentView (~1000+ lines) into focused, maintainable components
-- **Dramatically Improved Build Times** — Modular architecture means only changed files need recompilation, reducing development iteration time
-- **Enhanced Code Maintainability** — Clear separation of concerns makes code easier to understand, modify, and debug
-- **Better Team Collaboration** — Multiple developers can work on different components without conflicts
-- **Improved Testability** — ViewModels and Managers can be unit tested independently for better code quality
-- **Future-Proof Architecture** — Scalable foundation for new features and enhancements
-
-### New Architectural Components
-- **MainContentViewModel** — Centralized state management with all UI state and computed properties
-- **FileOperationsManager** — Dedicated manager for file signature analysis and smart analysis logic
-- **SigningOperationsManager** — Specialized manager for code signing and unsigning operations
-- **ValidationManager** — Focused manager for notarization requirements validation logic
-- **Modular UI Components** — Reusable view components (ValidationModePickerView, FileListContainerView, MainContentToolbar, NotarizationValidationBannerView)
-
-### Performance & Development Improvements
-- **Faster Compilation** — Reduced MainContentView from ~1000+ lines to ~400 lines with distributed logic
-- **Optimized Memory Usage** — Better state management and object lifecycle handling
-- **Enhanced Error Handling** — Centralized error management with consistent user feedback
-- **Improved Code Reusability** — Managers can be reused across different views and contexts
-- **Better Debugging Experience** — Modular architecture makes issues easier to isolate and fix
-- **Professional Code Organization** — Enterprise-grade architecture patterns for long-term maintainability
-
-### Technical Enhancements
-- **Async/Await Pattern Consistency** — Improved async operations handling across all managers
-- **State Management Optimization** — Centralized @Published properties with efficient updates
-- **Dependency Injection** — Proper dependency management for better testing and flexibility
-- **Task-Based Concurrency** — Modern Swift concurrency patterns for file operations
-- **Enhanced Code Documentation** — Comprehensive inline documentation for all new components
-
-### Bug Fixes & Improvements 
-- **Fixed file removal functionality** — Red X buttons now properly show confirmation dialogs and remove files from selection
-- **Enhanced alert system** — Added comprehensive alert handling for file removal confirmations and general notifications
-- **Improved state management** — File removal now properly cleans up all associated data including signatures, analysis results, and UI state
-- **Better user feedback** — Clear confirmation dialogs with file count display and proper cancel/confirm options
-- **Automatic UI updates** — File analysis and status information automatically refreshes after file removal operations
-
-### Working Folders System
-- **Project-based organization** — Group related files together into working folders for batch operations and project management
-- **Persistent folder management** with automatic status tracking across all files in each folder
-- **Smart file organization** with auto-suggested folder names based on file locations and naming patterns
-- **Batch operations** perform signing, notarization, analysis, and DMG creation on entire working folders
-- **Working folder status aggregation** showing overall project readiness and completion status
-- **Export configuration** functionality for sharing working folder setups with team members
-- **Comprehensive logging integration** with all working folder operations automatically logged for audit trails
-- **Toggle working folder mode** to switch between individual file management and project-based workflows
-- **Working folder creation wizard** with intelligent file grouping suggestions and naming recommendations
-
-### Professional DMG Creation System
-- **Complete DMG creation workflow** with support for multiple formats (compressed, read/write, read-only, highly compressed)
-- **Advanced DMG options** including encryption (AES-128/256), segmentation for large files, and custom background images
-- **App distribution DMGs** with professional drag-and-drop layouts including Applications folder aliases
-- **Multi-file DMG creation** from selected file collections with automatic staging and organization
-- **Blank DMG creation** for working disk images with user-specified sizes
-- **Professional layout customization** with custom icon positioning, window sizing, and background images
-- **Volume naming intelligence** with automatic name generation based on source content
-- **Size calculation and optimization** with automatic size estimation, compression recommendations, and space efficiency analysis
-- **Complete operation logging** with detailed DMG creation logs including command-line calls and processing times
-- **Encryption support** with password protection using industry-standard AES encryption
-
-### App Distribution Workflow
-- **End-to-end distribution preparation** from source app to ready-to-distribute DMG with signing and notarization
-- **Automated workflow orchestration** combining signing, notarization, stapling, and professional DMG creation in a single process
-- **Distribution readiness validation** ensuring apps meet all Apple distribution requirements before DMG creation
-- **Professional DMG layouts** with Applications folder shortcuts and custom branding support
-- **Workflow templates** for common distribution scenarios (Mac App Store, direct distribution, enterprise deployment)
-- **Progress tracking** with detailed status updates throughout the entire distribution preparation process
-- **Comprehensive validation** checking code signing, notarization status, and distribution requirements
-- **One-click distribution preparation** from unsigned app to distribution-ready DMG with full logging
-
-### Enhanced Logging System
-- **Working folder operation logging** with detailed project-level audit trails and batch operation tracking
-- **DMG creation logging** capturing all disk image creation operations with command-line details and processing metrics
-- **Distribution workflow logging** tracking complete end-to-end distribution preparation processes
-- **Enhanced metadata capture** including working folder configurations, DMG creation parameters, and workflow selections
-- **Advanced log organization** with operation-type filtering and project-based log grouping
-- **Export improvements** with workflow-specific log exports and enhanced formatting for professional documentation
-- **Statistics enhancements** showing distribution workflow success rates, DMG creation metrics, and working folder analytics
+### Logging and Diagnostics
+- Richer metadata in operation logs, including aggregated batch summaries
+- More robust credential masking and sensitive data scrubbing
+- Additional validation and distribution analytics exposed in log summaries
+- Documentation for common benign system log messages (e.g., RenderBox/ViewBridge) to reduce confusion
 
 ---
 
@@ -154,6 +93,11 @@
 - **Comprehensive audit trails** with all working folder operations automatically logged for enterprise compliance
 - **Flexible workflow modes** easily toggle between individual file management and project-based organization
 - **Working folder creation wizard** with intelligent file grouping suggestions and project naming recommendations
+- New in 2.6:
+  - Skip already processed items
+  - Auto-staple and optional auto-create DMG with preset layouts
+  - Validate-only dry run mode
+  - Per-run override for extended attributes cleaning
 
 ### Professional DMG Creation
 - **Complete DMG creation workflow** supporting multiple formats (compressed, read/write, read-only, highly compressed)
@@ -166,6 +110,8 @@
 - **Size optimization** with automatic size estimation, compression recommendations, and space efficiency analysis
 - **Complete operation logging** with detailed DMG creation logs including command-line calls, processing times, and file sizes
 - **Enterprise encryption support** with password protection using industry-standard AES encryption for sensitive distributions
+- New in 2.6:
+  - Selectable layout presets for auto-created DMGs
 
 ### App Distribution Workflow
 - **End-to-end distribution preparation** from source app to ready-to-distribute DMG with complete signing and notarization
@@ -176,6 +122,11 @@
 - **Comprehensive progress tracking** with detailed status updates throughout the entire distribution preparation process
 - **Multi-stage validation** checking code signing status, notarization completion, and distribution compliance requirements
 - **One-click distribution preparation** from unsigned app to distribution-ready DMG with complete audit logging and professional presentation
+- New in 2.6:
+  - Skip already notarized/stapled items
+  - Auto-staple and optional auto-create DMG with preset layouts
+  - Validate-only dry run mode
+  - Per-run extended attributes cleaning override
 
 ### Universal Extended Attributes Management
 - **Unified cleaning system** — Works seamlessly with individual files, working folders, and DMG creation workflows
@@ -189,6 +140,8 @@
 - **Resource fork cleanup** removing legacy Mac file system artifacts that interfere with modern operations
 - **Finder metadata removal** eliminating extended attributes that can cause signing, notarization, and DMG creation conflicts
 - **Enhanced success rates** for individual files, working folder projects, and complete distribution workflows
+- New in 2.6:
+  - Per-run override for extended attributes cleaning
 
 ### Apple Notarization Integration
 - **Seamless notarization workflow** with Apple's notary service and automated submission
@@ -200,6 +153,11 @@
 - **Batch notarization support** with queue management and progress tracking
 - **Pre-flight validation** with extended attributes assessment and cleaning recommendations
 - **Complete operation logging** with Apple responses, Request UUIDs, and comprehensive metadata automatically captured
+- New in 2.6:
+  - Skip already notarized items
+  - Auto-staple and optional auto-create DMG with preset layouts
+  - Validate-only dry run mode
+  - Per-run extended attributes cleaning override
 
 ### Advanced Persistent Logging
 - **Comprehensive operation tracking** — All signing, notarization, stapling, analysis, working folder, DMG creation, and validation operations automatically logged
@@ -218,7 +176,7 @@
 - **Automatic keychain discovery** of code signing certificates with trust validation
 - **Trust status indicators** (trusted/untrusted certificates) with detailed information
 - **Certificate type identification** (Developer ID, Apple Development, etc.) with usage guidance
-- **Expiration date monitoring** with renewal reminders and proactive notifications
+- **Expiration date monitoring** with proactive alerts and working folder impact assessment
 - **Certificate information dialogs** with comprehensive details and troubleshooting tips
 - **Keychain integration** with secure access and permission handling
 
@@ -284,6 +242,8 @@
 - **App distribution options** with Applications folder alias and layout customization
 - **Progress tracking** during DMG creation with detailed status updates
 - **Professional customization** options for enterprise branding and presentation
+- New in 2.6:
+  - Selectable layout presets for auto-created DMGs
 
 ### App Distribution Workflow
 *[Screenshot: Complete distribution workflow from app to DMG]*
@@ -292,6 +252,11 @@
 - **Workflow progress tracking** with detailed status updates at each stage
 - **Professional DMG preview** showing final distribution layout and presentation
 - **One-click distribution preparation** with complete automation and logging
+- New in 2.6:
+  - Skip already notarized/stapled items
+  - Auto-staple and optional auto-create DMG with preset layouts
+  - Validate-only dry run mode
+  - Per-run extended attributes cleaning override
 
 ### Enhanced Logging System
 *[Screenshot: Advanced log viewer showing comprehensive operation history with validation logging]*
@@ -309,6 +274,8 @@
 - **Manual cleaning capabilities** with working folder batch processing options
 - **Before/after comparison** showing cleaning operation results across multiple files
 - **Universal integration** — Same cleaning system works for signing, notarization, and DMG creation
+- New in 2.6:
+  - Per-run override for extended attributes cleaning
 
 ### Certificate Management
 *[Screenshot: Certificate selection with working folder context]*
@@ -317,6 +284,91 @@
 - **Extended attributes cleaning preference** with explanatory text and working folder integration
 - **Expiration date monitoring** and renewal reminders with project impact assessment
 - **Intelligent certificate recommendations** based on selected files and working folder requirements
+
+### Advanced Timing (Polling & Stapling)
+
+Fine‑tune how Signaro polls Apple for notarization results and how it retries stapling when tickets are still propagating (e.g., stapler error 65). Use the presets below or customize per your environment.
+
+### Recommended Presets
+
+- Balanced (default; good for most users)
+  - Poll Interval: 30s
+  - Max Wait: 10m
+  - Grace Wait (after Acceptance): 60s
+  - Stapling Backoff: Base 30s, Jitter 10s, Max Attempts 8, Max Delay 180s
+
+- Aggressive (faster feedback for single items/small batches on stable networks)
+  - Poll Interval: 15s
+  - Max Wait: 8m
+  - Grace Wait: 30s
+  - Stapling Backoff: Base 15s, Jitter 5s, Max Attempts 5, Max Delay 90s
+
+- Conservative / CI (large batches, flaky networks, or peak Apple load)
+  - Poll Interval: 45s
+  - Max Wait: 20m
+  - Grace Wait: 120s
+  - Stapling Backoff: Base 45s, Jitter 15s, Max Attempts 10, Max Delay 240s
+
+### What Each Setting Does
+
+- Poll Interval
+  - How often Signaro queries Apple for status of a notarization Request UUID
+  - Lower = faster detection but more API calls; higher = gentler on rate limits
+
+- Max Wait
+  - Upper bound for waiting on “Accepted” before timing out the polling cycle
+
+- Grace Wait (after Acceptance)
+  - Extra delay after “Accepted” to let Apple’s ticket propagate before stapling
+  - Helps avoid intermittent stapler error 65 (“Ticket not found yet”)
+
+- Stapling Backoff Policy (applies to retryable errors like 65)
+  - Base Delay: initial retry wait; grows exponentially each attempt
+  - Jitter: randomization added to spreads out retries in batches/CI
+  - Max Attempts: total retry tries before failing
+  - Max Delay: cap on any single retry sleep
+
+### When To Adjust
+
+- Frequent stapler 65s after “Accepted”: increase Grace to 90–120s and/or raise Max Attempts to 10 and Max Delay to 240s
+- Very large CI batches: lengthen Poll Interval (45s), increase Jitter (15s), raise Attempts (10)
+- Need quick feedback for single items: use the Aggressive preset
+
+### Notes
+
+- Reset Defaults restores the Balanced preset values
+- Short Poll Intervals across large batches can hit rate limits—prefer Balanced/Conservative for team/CI workloads
+- These settings affect behavior only after a notarization submission; they don’t change Apple’s actual processing time
+
+---
+
+## Troubleshooting: Common Log Messages
+
+This section explains frequent messages you may see in Signaro’s debug logs or macOS Console, what they mean, and typical actions.
+
+- "code object is not signed at all", "Authority lines: []", or "codesign --verify result: valid=false, terminationStatus=1"
+  - Meaning: The app/bundle is currently unsigned, or the signature is missing/invalid.
+  - Action: Sign with a Developer ID Application certificate (for .app). For installers (.pkg), use a Developer ID Installer certificate. Consider enabling extended attributes cleaning before signing, then re-verify and proceed to notarization.
+
+- "In architecture: x86_64" (or arm64)
+  - Meaning: codesign reported which architecture it checked during verification.
+  - Action: Informational only. For universal binaries you may see multiple architecture notes.
+
+- "IdentityManager: Filtering out certificate: Package Signing … (include: false, exclude: false)"
+  - Meaning: A certificate type not applicable to the current operation was ignored (e.g., an Installer/Package certificate when working with an .app).
+  - Action: Choose an appropriate certificate type for the file you are processing (Developer ID Application for .app, Developer ID Installer for .pkg).
+
+- "Unable to open mach-O at path: … RenderBox.framework … default.metallib Error:2"
+  - Meaning: A benign system message from Apple’s internal RenderBox/metal tooling while macOS renders or previews views.
+  - Action: Safe to ignore. It does not affect signing or notarization outcomes.
+
+- "ViewBridge to RemoteViewService Terminated … NSViewBridgeErrorCanceled"
+  - Meaning: A remote view (e.g., a system panel or sheet) was dismissed/canceled; macOS logs the disconnect.
+  - Action: Benign and expected when closing dialogs; no action required.
+
+- Frequent stapler error 65 ("ticket not found yet") after notarytool reports "Accepted"
+  - Meaning: Apple’s ticket may not have fully propagated to all CDNs when stapling first runs.
+  - Action: Increase Grace Wait to 90–120s and/or raise Stapling Backoff Max Attempts and Max Delay. See Advanced Timing (Polling & Stapling) for recommended presets.
 
 ---
 
@@ -330,41 +382,9 @@
 
 ---
 
-## Security & Privacy
-
-Signaro maintains the highest security standards with enterprise-grade protection:
-- **Local operations only** — All signing, analysis, extended attributes, working folder, validation, and DMG operations happen on your Mac with no external data transmission
-- **Secure keychain integration** — Certificate access through macOS Keychain with proper permissions
-- **No data collection** — Your files, working folders, validation results, and certificates never leave your device (except for Apple notarization)
-- **Encrypted credential handling** — Notarization credentials stored in memory only with secure cleanup
-- **Apple tool integration** — Uses official Apple command-line tools (codesign, pkgutil, notarytool, stapler, xattr, hdiutil)
-- **Safe extended attributes handling** — Only removes problematic attributes with user consent and comprehensive logging
-- **Universal cleaning security** — Extended attributes cleaning uses the same secure methods for all workflows
-- **Comprehensive audit logging** — Detailed operation logs for security compliance and debugging
-- **Privacy-first design** — No analytics, tracking, or data collection of any kind
-- **Secure log storage** — Operation logs stored locally with automatic credential masking for privacy protection
-- **Thread-safe logging** — Concurrent operations safely logged without data corruption or race conditions
-- **Working folder security** — Project configurations stored locally with no external synchronization
-- **DMG creation security** — All disk image operations performed locally using Apple's secure hdiutil framework
-- **Validation privacy** — All requirements validation performed locally with no external service communication
-- **Modular architecture security** — Enhanced security through separation of concerns and proper access control
-
----
-
-## Perfect For
-
-- **iOS/macOS Developers** — Complete development workflow from signing to distribution-ready DMGs with working folders project organization, intelligent notarization validation, automatic extended attributes cleaning, modular architecture for customization, and comprehensive audit logging
-- **IT Administrators** — Manage configuration profiles and installer packages with enterprise features, working folder organization, pre-flight validation, professional DMG creation, enhanced performance, and detailed operation logs for compliance
-- **Enterprise Teams** — Ensure consistent signing and notarization across projects with team coordination tools, working folder sharing, validation standardization, unified extended attributes management, improved build times, and comprehensive audit trails
-- **Security Professionals** — Verify and analyze file signatures with detailed security assessment, validation requirements checking, metadata analysis, working folder project tracking, enhanced debugging capabilities, and complete operation logging for forensic analysis
-- **Independent Developers** — Professional-grade signing, notarization, and DMG creation without complexity, with working folder organization, intelligent validation, automatic handling of common file issues, faster development iteration, and detailed logs for Apple Support communication
-- **DevOps Engineers** — Integrate signing, notarization, and distribution operations into automated workflows and CI/CD pipelines with working folder batch processing, validation automation, reliable extended attributes handling, modular architecture for integration, and comprehensive logging for build process tracking
-
----
-
 ## Version Information
 
-- **Current Version**: 2.5 Build 1.4
+- **Current Version**: 2.6 Build 1.1
 - **Release**: 2025
 - **Platform**: macOS (Universal Binary - Apple Silicon & Intel)
 - **License**: Free
