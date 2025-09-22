@@ -6,7 +6,8 @@ Current Status: Feature-complete core functionality with ongoing enhancements. S
 
 ---
 
-## What's New in Version 2.6 Build 2.0
+## What's New in Version 2.8 Build 1.0
+- Bugfix
 
 ### New: PKG Distribution Workflow
 - End-to-end workflow tailored for .pkg installers:
