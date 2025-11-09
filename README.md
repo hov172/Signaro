@@ -6,6 +6,57 @@ Current Status: Feature-complete core functionality with ongoing enhancements. S
 
 ---
 
+## What's New in Version 3.2 Build 1.0
+
+### Bug Fixes & UI Improvements
+
+#### Notarization Credential Dialog Fix
+- **Fixed:** App-Specific Password input not enabling "Continue" button
+  - **Issue:** When entering Apple ID credentials, typing in the app-specific password field would not activate the "Continue" button, requiring users to switch tabs (to Keychain Profile and back to Apple ID) as a        workaround
+  - **Root Cause:** Missing proper `onChange` handler integration for password field validation
+  - **Resolution:** Implemented proper `onChange` handler with immediate validation state updates to enable the "Continue" button as soon as all required fields are filled
+  - **Impact:** Smoother credential entry experience with immediate UI feedback, eliminating the need for the tab-switching workaround
+ 
+## What's New in Version 3.1 Build 1.5
+
+### Stability, Concurrency, and Build Reliability
+- Reworked process execution to a single shared `ProcessRunner` actor and removed scattered runner references. All shell interactions now go through `await ProcessRunner.shared.run(...)` for clarity and consistency.
+- Introduced a safe, lock‑backed output collector to satisfy Swift 6 `@Sendable` concurrency requirements and eliminate data races and warnings (no more “mutation of captured var in concurrently‑executing code”).
+- Cleaned up unnecessary `await` on actor singletons and eliminated unreachable `catch` blocks around non‑throwing async paths.
+- Standardized string trimming and splitting calls to use explicit `CharacterSet` (e.g., `CharacterSet.whitespacesAndNewlines`) to fix inference errors.
+
+### Notarization Flow Improvements
+- Notarization operations now consistently rely on `ProcessRunner` for `notarytool`, `stapler`, and `spctl` invocations.
+- Fixed team ID argument handling and several small parsing issues for more reliable status checks and log retrieval.
+- Hardened stapling pre‑checks and result handling with clearer user messaging.
+
+### DMG Creation and Distribution Workflows
+- Unified Local runner calls in DMG creation with `ProcessRunner` and removed stray braces/closures that caused parse errors.
+- Added explicit `fileSystem` parameter to all `DMGCreationOptions` call sites (defaults to user preference or APFS), fixing missing‑argument compile errors.
+- Resolved segmentation, background image, and layout customizations to be robust even under concurrent UI updates.
+
+### Code Signing
+- Fixed an extra trailing closure/parse error in `CodeSigningOperations.signInPlace` and clarified `CharacterSet` usage.
+- Ensured signing and unsigning paths call the shared runner consistently.
+
+### UI/Project Structure
+- Added Preferences UI (Logging, Certificates visibility, and DMG default filesystem). Wired the dialog into the main view and included in the target.
+- Resolved Xcode project parse issues by restoring a clean project file and re‑adding missing source references (e.g., `ProcessRunner.swift`, `PreferencesView.swift`).
+- Eliminated stale references to removed files and ensured all sources are present in the build phase.
+
+### Developer Experience
+- Standardized command redaction for sensitive values (e.g., app‑specific passwords) in logs.
+- Reduced spurious warnings by removing unreachable `catch` blocks and simplifying async paths.
+
+### Versioning & Metadata
+- Bumped marketing version to 3.1 in Xcode project settings (build remains 1.5).
+
+These changes collectively deliver a more reliable build, cleaner concurrency semantics, and stronger, more predictable notarization and distribution workflows.
+
+### Bug Fixes & Reliability
+- **PKG Signing:** Resolved a persistent issue where signing `.pkg` files would fail with a "Bad file descriptor" error, particularly when the app was running from a directory it didn't have write permissions to. The signing operation now uses a temporary directory, ensuring the process completes reliably regardless of the source file's location.
+
+
 ## What's New in Version 2.8 Build 1.0
 - Bugfix
 
