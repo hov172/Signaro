@@ -5,6 +5,9 @@ Signaro is a completely rewritten, modern, privacy-focused macOS app for signing
 Current Status: Feature-complete core functionality with ongoing enhancements. See roadmap for upcoming features.
 
 ---
+## What's New in Version 3.2 Build 1.1
+### Bug Fixes & UI Improvements
+- Fix the UI Layout in Preferences 
 
 ## What's New in Version 3.2 Build 1.0
 
