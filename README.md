@@ -212,7 +212,7 @@ Best‑Practice Examples
 
 ## Version Information
 
-- Current Version: 2.6 Build 2.0
+- Current Version: 3.2 Build 1.1
 - Release: 2025
 - Platform: macOS (Universal Binary)
 - Architecture: SwiftUI + MVVM, advanced logging, working folders, professional DMG creation, intelligent validation
