@@ -289,6 +289,17 @@ These messages appear in Xcode's console during normal operation and don't affec
 
 ---
 
+- [GitHub](https://github.com/hov172)
+- [PowerShell Gallery](https://www.powershellgallery.com/profiles/hov172)
+- 📨 Slack: **@Hov172**
+- 🕹️ Discord: **Jay172_**
+- [LinkedIn](https://www.linkedin.com/in/jesus-a-785bb616?trk=people-guest_people_search-card)
+- 🐦 [Twitter / X (@AyalaSolutions)](https://twitter.com/AyalaSolutions)
+- <a href="https://bsky.app/profile/ayalasolutions.bsky.social"><img src="https://raw.githubusercontent.com/bluesky-social/social-app/main/assets/logo.png" width="20" alt="Bluesky Logo"></a> [@AyalaSolutions](https://bsky.app/profile/ayalasolutions.bsky.social)
+- 📧 *Contact via GitHub, Social accounts issues or discussions*.
+
+---
+
 ## Version Information
 
 - **Current Version:** 3.5 Build 1.0
