@@ -5,6 +5,20 @@ Signaro is a completely rewritten, modern, privacy-focused macOS app for signing
 Current Status: Feature-complete core functionality with ongoing enhancements. See roadmap for upcoming features.
 
 ---
+## What's New in Version 4.1 Build 1.1
+
+Follow-up to 4.1 Build 1.0. Fixes two silent no-ops in the App Distribution workflow's Advanced DMG Options: the custom **App icon x/y position** and the **Text size** stepper both rode the full configuration pipeline but never reached the produced DMG.
+
+### Bug Fixes
+
+- **Custom App icon position is now applied.** The dialog's icon-position x/y stepper previously looked wired but fell back to the hardcoded `(140, 180)` because the AppleScript builder looked up the position under a different dictionary key than the UI wrote. Because the fallback matched the dialog's initial values, the regression was invisible — adjusting the stepper produced no change in the mounted DMG.
+- **Text size is now emitted into the Finder layout script.** The "Text: 12 pt" stepper had no effect on the final DMG. The value flowed through the workflow but was never written to Finder's icon-view options. It is now applied when set.
+
+### Known Good
+
+- Other Advanced DMG Options (custom volume icon, background image, window size, icon size, Applications alias position) were verified end-to-end during this pass and behave as documented in 4.1 Build 1.0.
+
+---
 
 ## What's New in Version 4.1 Build 1.0
 
