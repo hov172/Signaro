@@ -2,11 +2,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.0 Build 1.3 (2026-04-27)**
+**Current version: 5.0 Build 1.4 (2026-04-27)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-50-build-13)
+- [What's New](#whats-new-in-version-50-build-14)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -21,6 +21,20 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 - [Troubleshooting](#troubleshooting)
 - [Architecture Overview](#architecture-overview)
 - [Version Information](#version-information)
+
+---
+
+## What's New in Version 5.0 Build 1.4
+
+CLI parity completion — four GUI-only features now have full CLI equivalents, and the matching GUI wiring gaps are closed.
+
+- **New: `folder sign <dir>`.** Sign all signable files in a directory. Auto-routes each file to the correct certificate class; supports `--recursive`, `--dry-run`, `--identity <name>`, and `--clean-attributes`. JSON output reports per-file status and a summary count.
+- **New: `history list`.** Browse the local submission history from the command line. Filter by operation type (`--operation <type>`) and cap result size (`--limit N`). JSON output surfaces file path, operation, success flag, timestamp, processing time, and Apple response.
+- **Updated: `identities list` expiry classification.** Every identity now includes `expiryStatus`, `expiresInDays`, and `expiresAt` fields in JSON output. Human-readable output appends `[expires in N days — STATUS]` after each name.
+- **Fixed: Certificate expiry notifications now actually fire.** `notifyExpiringCertificates` is wired into the daily certificate check, delivering a `UNUserNotification` once per certificate per day at warning/imminent/expired thresholds. The Notifications preference toggle now correctly controls this via `Signaro_CertExpiryNotificationsEnabled`.
+- **Fixed: Distribution runs now appear in Submission History.** `logDistributionRun(...)` is called at both success and failure exit points in the App and PKG distribution workflows. App and PKG distribution events are now browsable in the History sheet alongside signing and notarization entries.
+- **Fixed: Batch signing Cancel button.** The Cancel button in the batch progress row now correctly cancels the running `BatchSigningCoordinator` operation.
+- **Build metadata bump.** `CURRENT_PROJECT_VERSION` is now `1.4` (`MARKETING_VERSION` remains `5.0`), and the CLI version string is now `SignaroCLI 5.0.1.4`.
 
 ---
 
@@ -183,12 +197,12 @@ Professional disk image creation with full Finder layout customization via a mou
 ### Working Folders
 
 - **Named project folders** that group related files together for batch operations. Persistent across launches via `WorkingFolderManager`.
-- **Sign All (v4.8+).** Signs every unsigned file in the folder, routing each to the correct certificate class automatically. Spinner feedback during signing; status pills update in place after completion.
+- **Sign All (v4.8+).** Signs every unsigned file in the folder, routing each to the correct certificate class automatically. Available in the GUI (folder manager) and CLI via `folder sign <dir>`. Spinner feedback during signing; status pills update in place after completion.
 - **Sidebar integration.** When Working Folders mode is active, the main view adopts a two-column layout with folders in the leading sidebar. A direct toolbar button (v5.0+) toggles the sidebar without navigating to the overflow menu.
 
 ### Submission History & Analytics
 
-- **Submission History Browser (v4.6+).** Structured, searchable record of every operation, browsable from the Submission Log window. Filter by operation type, search by filename or UUID, toggle failures-only, copy request IDs to the clipboard.
+- **Submission History Browser (v4.6+).** Structured, searchable record of every operation, browsable from the Submission Log window or via `history list` in the CLI. Filter by operation type, search by filename or UUID, toggle failures-only, copy request IDs to the clipboard.
 - **Distribution Analytics.** On-device metrics store (`DistributionMetricsStore`) backed by `SubmissionLogger`. Aggregates submission counts, notarization durations, and failure classes. Exportable as CSV or JSON from the Analytics tab in Preferences. Strictly local — no data leaves the device.
 - **Retry Policy.** Bounded exponential backoff with jitter around `notarytool submit`, with classification of retryable (5xx, DNS, timeout) versus fatal (4xx, authentication) conditions. Stapler error 65 is retried.
 
@@ -210,7 +224,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.3
+SignaroCLI --version    # → SignaroCLI 5.0.1.4
 SignaroCLI --help
 ```
 
@@ -224,7 +238,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
 | `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.3` and exit 0. |
+| `--version` | Print `SignaroCLI 5.0.1.4` and exit 0. |
 
 ---
 
@@ -234,11 +248,16 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |:---|:---|:---|
 | `analyze` | Check signature, notarization, & entitlements | `SignaroCLI analyze MyApp.app --smart` |
 | `validate` | Pre-submission readiness check | `SignaroCLI validate MyApp.app --mode quick` |
-| `sign` | Sign files (supports split identities) | `SignaroCLI sign MyApp.app --identity-name "..."` |
+| `sign` | Sign one or more files (split-identity aware) | `SignaroCLI sign MyApp.app --identity-name "..."` |
+| `unsign` | Remove existing code signatures | `SignaroCLI unsign MyApp.app` |
+| `folder sign` | Sign all signable files in a directory | `SignaroCLI folder sign ./build --recursive` |
 | `notarize` | Submit, wait for, or log notarization | `SignaroCLI notarize submit MyApp.zip --wait` |
 | `staple` | Attach notarization ticket to files | `SignaroCLI staple MyApp.app` |
 | `dmg create` | Create customized disk images | `SignaroCLI dmg create --source App.app --icon-size 96` |
 | `distribute` | Full E2E pipeline (Sign → Notarize → DMG) | `SignaroCLI distribute app --app MyApp.app` |
+| `identities list` | List Developer ID identities with expiry status | `SignaroCLI identities list --json` |
+| `credentials test` | Validate notarization credentials | `SignaroCLI credentials test --keychain-profile "..."` |
+| `history list` | Browse local submission history | `SignaroCLI history list --limit 20` |
 | `xcode-phase` | Generate Xcode Build Phase script | `SignaroCLI xcode-phase MyApp.xcodeproj` |
 
 #### `analyze <path> [<path> ...]`
@@ -273,6 +292,15 @@ SignaroCLI sign MyApp.app MyInstaller.pkg \
   --clean-attributes
 ```
 
+#### `unsign <path> [<path> ...]`
+
+Remove the code signature from one or more files. This is useful when you need to re-sign a bundle with a different identity and want to ensure a clean state.
+
+```bash
+SignaroCLI unsign MyApp.app
+SignaroCLI unsign MyApp.app MyFramework.framework --json
+```
+
 #### `staple <path> [<path> ...]`
 
 Attach a notarization ticket to one or more previously notarized files.
@@ -286,7 +314,7 @@ SignaroCLI staple MyApp.app --json
 
 ```bash
 SignaroCLI staple --uuid <request-id> MyApp.app --keychain-profile MyProfile
-SignaroCLI staple --uuid <request-id> MyInstaller.pkg --keychain-profile YourProfileName --timeout 20 --poll-interval 20
+SignaroCLI staple --uuid <request-id> MyInstaller.pkg --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
 ```
 
 #### `xcode-phase <path.xcodeproj>` (v4.6+)
@@ -304,7 +332,7 @@ Submit a file to Apple's notarization service and print the request ID. Supports
 
 ```bash
 SignaroCLI notarize submit MyApp.zip --keychain-profile MyProfile --wait
-SignaroCLI notarize submit MyApp.app --keychain-profile YourProfileName --wait
+SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO --wait
 SignaroCLI notarize submit MyApp.zip \
   --key-id KEYID \
   --issuer-id ISSUERID \
@@ -317,7 +345,7 @@ Poll a previously submitted notarization request ID and exit when Apple returns 
 
 ```bash
 SignaroCLI notarize wait <request-id> --keychain-profile MyProfile
-SignaroCLI notarize wait <request-id> --keychain-profile YourProfileName --timeout 20 --poll-interval 20
+SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
 ```
 
 #### `notarize log <request-id>`
@@ -326,7 +354,7 @@ Retrieve Apple's notarization log for a completed submission. Useful for diagnos
 
 ```bash
 SignaroCLI notarize log <request-id> --keychain-profile MyProfile
-SignaroCLI notarize log <request-id> --keychain-profile YourProfileName --json
+SignaroCLI notarize log <request-id> --keychain-profile Jay_SIGNARO --json
 ```
 
 #### `dmg create`
@@ -348,6 +376,72 @@ SignaroCLI dmg create \
   --window-height 380
 ```
 
+**Advanced Creation Variants:**
+
+```bash
+# 1) Create a blank 500MB APFS disk image
+SignaroCLI dmg create --blank --size 500m --volume-name "Scratch" --output scratch.dmg
+
+# 2) Create a DMG from multiple files/folders
+SignaroCLI dmg create --multiple --output collection.dmg \
+  ~/Desktop/Notes.txt \
+  ~/Documents/Project_A \
+  --volume-name "Resources"
+
+# 3) Create a segmented DMG (e.g. for split downloads)
+SignaroCLI dmg create --segmented --source BigApp.app --segment-size 1g --output BigApp.dmg
+
+# 4) Create an encrypted AES-256 DMG
+SignaroCLI dmg create --encrypt --password "secret123" --source App.app --output safe.dmg
+```
+
+#### `identities list`
+
+List all available Developer ID certificates. Includes human-readable expiry warnings and status pills. Use `--json` for structured metadata including SHA-1, Team ID, and serial numbers.
+
+```bash
+SignaroCLI identities list
+SignaroCLI identities list --show-all --json
+```
+
+#### `folder sign <dir>` (v5.0.1.4+)
+
+Sign all signable files in a directory. Files are auto-routed to the correct certificate class by extension. Supports recursive traversal (default), dry-run mode, explicit identity override, and extended-attributes cleaning.
+
+```bash
+SignaroCLI folder sign ./build \
+  --recursive \
+  --app-identity-name "Developer ID Application: Acme (TEAMID)" \
+  --pkg-identity-name "Developer ID Installer: Acme (TEAMID)" \
+  --clean-attributes
+
+SignaroCLI folder sign ./artifacts --dry-run --json
+```
+
+#### `history list` (v5.0.1.4+)
+
+Browse the local submission history captured by `SubmissionLogger`. Returns entries in reverse-chronological order. Use the request ID from a past notarization record to feed directly into `notarize log` or `staple --uuid`.
+
+```bash
+SignaroCLI history list
+SignaroCLI history list --limit 50 --json
+SignaroCLI history list --operation APP_DISTRIBUTION --json
+```
+
+Available `--operation` values: `SIGNING`, `NOTARIZATION`, `STAPLING`, `APP_DISTRIBUTION`, `PKG_DISTRIBUTION`, `WORKING_FOLDER`.
+
+#### `credentials test`
+
+Validate your notarization credentials against Apple's requirements without performing a submission. Supports Keychain Profiles, API Keys, and Apple ID modes.
+
+```bash
+SignaroCLI credentials test --keychain-profile MyProfile
+SignaroCLI credentials test \
+  --key-id KEYID \
+  --issuer-id ISSUERID \
+  --key-path ~/.private_keys/AuthKey_KEYID.p8
+```
+
 #### `distribute app`
 
 Full App Distribution workflow: sign → notarize → staple → create DMG → sign DMG → notarize DMG → staple DMG. The input must be an `.app` bundle. Pass `--skip-notarize` to produce a signed, un-notarized DMG (useful for offline development workflows).
@@ -356,7 +450,7 @@ Full App Distribution workflow: sign → notarize → staple → create DMG → 
 SignaroCLI distribute app \
   --app MyApp.app \
   --identity-name "Developer ID Application: Acme (TEAMID)" \
-  --keychain-profile YourProfileName \
+  --keychain-profile Jay_SIGNARO \
   --output-dir ~/Desktop \
   --volume-name "My App Installer" \
   --background Resources/background.png \
@@ -380,7 +474,7 @@ Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → 
 SignaroCLI distribute pkg \
   --pkg MyInstaller.pkg \
   --identity-name "Developer ID Installer: Acme (TEAMID)" \
-  --keychain-profile YourProfileName \
+  --keychain-profile Jay_SIGNARO \
   --create-dmg \
   --volume-name "My Installer" \
   --background Resources/pkg-bg.png \
@@ -392,7 +486,7 @@ SignaroCLI distribute pkg \
 
 ```bash
 # 1) Store credentials once
-xcrun notarytool store-credentials YourProfileName \
+xcrun notarytool store-credentials Jay_SIGNARO \
   --apple-id you@example.com \
   --team-id TEAMID
 
@@ -402,10 +496,10 @@ SignaroCLI sign MyApp.app \
   --clean-attributes
 
 # 3) Submit (non-blocking)
-SignaroCLI notarize submit MyApp.app --keychain-profile YourProfileName
+SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO
 
 # 4) Wait for verdict
-SignaroCLI notarize wait <request-id> --keychain-profile YourProfileName
+SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO
 
 # 5) Staple and verify
 SignaroCLI staple MyApp.app
@@ -491,10 +585,10 @@ SubmissionLogger BatchSigningCoordinator  BatchDistributionCoordinator
 | **PKG Distribution Pipeline** | ✅ | ✅ |
 | **DMG Layout Customization** | ✅ (Interactive Preview) | ✅ (Flags & Scripts) |
 | **Smart Entitlement Analysis** | ✅ | ✅ |
-| **Batch Signing & Checkpoints** | ✅ | ❌ (Single-file focus) |
-| **Working Folder Management** | ✅ | ❌ |
-| **Submission History Browser** | ✅ | ❌ (`notarize log` only) |
-| **Expiry Notifications** | ✅ | ❌ |
+| **Batch Signing & Checkpoints** | ✅ | ✅ (`folder sign` with per-file routing) |
+| **Working Folder Management** | ✅ | ✅ (`folder sign <dir>`) |
+| **Submission History Browser** | ✅ | ✅ (`history list`) |
+| **Expiry Notifications** | ✅ | ✅ (expiry fields in `identities list`) |
 
 Key design constraints:
 - All operations execute through `ProcessRunner`, an actor-serialized wrapper around `Process` that prevents concurrent invocations of tools that do not support it (`codesign`, `productsign`, `notarytool`).
@@ -508,11 +602,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.3 |
+| Current version | 5.0 Build 1.4 |
 | Build date | 2026-04-27 |
 | `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.3 |
-| CLI version string | `SignaroCLI 5.0.1.3` |
+| `CURRENT_PROJECT_VERSION` | 1.4 |
+| CLI version string | `SignaroCLI 5.0.1.4` |
 | Platform | macOS 13.5+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 64 tests across 10 classes in `SignaroTests` |
