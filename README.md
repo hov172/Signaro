@@ -286,7 +286,7 @@ SignaroCLI staple MyApp.app --json
 
 ```bash
 SignaroCLI staple --uuid <request-id> MyApp.app --keychain-profile MyProfile
-SignaroCLI staple --uuid <request-id> MyInstaller.pkg --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
+SignaroCLI staple --uuid <request-id> MyInstaller.pkg --keychain-profile YourProfileName --timeout 20 --poll-interval 20
 ```
 
 #### `xcode-phase <path.xcodeproj>` (v4.6+)
@@ -304,7 +304,7 @@ Submit a file to Apple's notarization service and print the request ID. Supports
 
 ```bash
 SignaroCLI notarize submit MyApp.zip --keychain-profile MyProfile --wait
-SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO --wait
+SignaroCLI notarize submit MyApp.app --keychain-profile YourProfileName --wait
 SignaroCLI notarize submit MyApp.zip \
   --key-id KEYID \
   --issuer-id ISSUERID \
@@ -317,7 +317,7 @@ Poll a previously submitted notarization request ID and exit when Apple returns 
 
 ```bash
 SignaroCLI notarize wait <request-id> --keychain-profile MyProfile
-SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
+SignaroCLI notarize wait <request-id> --keychain-profile YourProfileName --timeout 20 --poll-interval 20
 ```
 
 #### `notarize log <request-id>`
@@ -326,7 +326,7 @@ Retrieve Apple's notarization log for a completed submission. Useful for diagnos
 
 ```bash
 SignaroCLI notarize log <request-id> --keychain-profile MyProfile
-SignaroCLI notarize log <request-id> --keychain-profile Jay_SIGNARO --json
+SignaroCLI notarize log <request-id> --keychain-profile YourProfileName --json
 ```
 
 #### `dmg create`
@@ -356,7 +356,7 @@ Full App Distribution workflow: sign → notarize → staple → create DMG → 
 SignaroCLI distribute app \
   --app MyApp.app \
   --identity-name "Developer ID Application: Acme (TEAMID)" \
-  --keychain-profile Jay_SIGNARO \
+  --keychain-profile YourProfileName \
   --output-dir ~/Desktop \
   --volume-name "My App Installer" \
   --background Resources/background.png \
@@ -380,7 +380,7 @@ Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → 
 SignaroCLI distribute pkg \
   --pkg MyInstaller.pkg \
   --identity-name "Developer ID Installer: Acme (TEAMID)" \
-  --keychain-profile Jay_SIGNARO \
+  --keychain-profile YourProfileName \
   --create-dmg \
   --volume-name "My Installer" \
   --background Resources/pkg-bg.png \
@@ -392,7 +392,7 @@ SignaroCLI distribute pkg \
 
 ```bash
 # 1) Store credentials once
-xcrun notarytool store-credentials Jay_SIGNARO \
+xcrun notarytool store-credentials YourProfileName \
   --apple-id you@example.com \
   --team-id TEAMID
 
@@ -402,10 +402,10 @@ SignaroCLI sign MyApp.app \
   --clean-attributes
 
 # 3) Submit (non-blocking)
-SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO
+SignaroCLI notarize submit MyApp.app --keychain-profile YourProfileName
 
 # 4) Wait for verdict
-SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO
+SignaroCLI notarize wait <request-id> --keychain-profile YourProfileName
 
 # 5) Staple and verify
 SignaroCLI staple MyApp.app
