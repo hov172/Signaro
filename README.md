@@ -1,10 +1,37 @@
-# As a pre-release to download please go to releases. 
-
 # Signaro: Advanced macOS Code Signing & Notarization Utility
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.0 Build 1.1 (2026-04-26)**
+**Current version: 5.0 Build 1.3 (2026-04-27)**
+
+## Table of Contents
+
+- [What's New](#whats-new-in-version-50-build-13)
+- [Core Features](#core-features)
+  - [Code Signing](#code-signing)
+  - [Notarization](#notarization)
+  - [DMG Creation and Customization](#dmg-creation-and-customization)
+  - [Distribution Workflows](#distribution-workflows)
+  - [Certificate Management](#certificate-management)
+- [Command-Line Interface](#command-line-interface)
+  - [CLI Commands](#commands)
+  - [End-to-End Example (Profile-Based)](#end-to-end-example-profile-based)
+- [Notarization Credential Modes](#notarization-credential-modes)
+- [System Requirements](#system-requirements)
+- [Troubleshooting](#troubleshooting)
+- [Architecture Overview](#architecture-overview)
+- [Version Information](#version-information)
+
+---
+
+## What's New in Version 5.0 Build 1.3
+
+DMG distribution workflow reliability and diagnostics release.
+
+- **Fixed: DMG layout persistence mismatch against preview/background size.** Finder customization now explicitly hides the path bar during layout scripting so window bounds and visible background rendering stay consistent with the preview.
+- **Fixed: Workflow checkpoint discard consistency.** "Discard All" now clears pending workflow checkpoints through an awaited single-path call, preventing stale checkpoint banners after reopen/relaunch.
+- **Added: DMG layout debug instrumentation.** App and PKG distribution flows now emit step-by-step DMG layout debug logs, including AppleScript generation/execution markers and script capture in operation output for troubleshooting.
+- **Build metadata bump.** `CURRENT_PROJECT_VERSION` is now `1.3` (`MARKETING_VERSION` remains `5.0`), and the CLI version string is now `SignaroCLI 5.0.1.3`.
 
 ---
 
@@ -109,7 +136,15 @@ DMG customization that works. Rebuilds the customization pipeline to apply icons
 ### Code Signing
 
 - **In-place and copy-based signing** using `codesign` with hardened-runtime entitlements (`--options=runtime`) for notarization compatibility. Supports Developer ID Application and Developer ID Installer certificate classes.
-- **Split-aware signing for mixed selections.** When the file list contains both app-type (`.app`, `.dmg`) and installer-type (`.pkg`, `.mobileconfig`) files, each file is signed with the certificate class that matches its type. This matches the behavior that Apple's signing tools expect and prevents a common mistake where all files are submitted to the same identity regardless of type.
+- **Split-aware signing for mixed selections.** When the file list contains both app-type (`.app`, `.dmg`) and installer-type (`.pkg`, `.mobileconfig`) files, each file is signed with the certificate class that matches its type.
+
+| File Type | Extension | Certificate Class |
+|:---|:---|:---|
+| **App Bundles** | `.app` | Developer ID Application |
+| **Disk Images** | `.dmg` | Developer ID Application |
+| **Installers** | `.pkg` | Developer ID Installer |
+| **Config Profiles** | `.mobileconfig` | Developer ID Installer |
+
 - **Extended attributes cleaning** (`xattr -cr`) before signing, ensuring no quarantine flags or third-party metadata interferes with notarization assessment.
 - **Batch signing engine with checkpoint resume (v4.8+).** `BatchSigningCoordinator` processes files sequentially, publishes per-file live progress, saves a checkpoint after each success, and pauses on failure so the run is resumable from the exact failure point at next launch.
 
@@ -175,7 +210,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.1
+SignaroCLI --version    # → SignaroCLI 5.0.1.3
 SignaroCLI --help
 ```
 
@@ -189,11 +224,22 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
 | `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.1` and exit 0. |
+| `--version` | Print `SignaroCLI 5.0.1.3` and exit 0. |
 
 ---
 
 ### Commands
+
+| Command | Purpose | Example |
+|:---|:---|:---|
+| `analyze` | Check signature, notarization, & entitlements | `SignaroCLI analyze MyApp.app --smart` |
+| `validate` | Pre-submission readiness check | `SignaroCLI validate MyApp.app --mode quick` |
+| `sign` | Sign files (supports split identities) | `SignaroCLI sign MyApp.app --identity-name "..."` |
+| `notarize` | Submit, wait for, or log notarization | `SignaroCLI notarize submit MyApp.zip --wait` |
+| `staple` | Attach notarization ticket to files | `SignaroCLI staple MyApp.app` |
+| `dmg create` | Create customized disk images | `SignaroCLI dmg create --source App.app --icon-size 96` |
+| `distribute` | Full E2E pipeline (Sign → Notarize → DMG) | `SignaroCLI distribute app --app MyApp.app` |
+| `xcode-phase` | Generate Xcode Build Phase script | `SignaroCLI xcode-phase MyApp.xcodeproj` |
 
 #### `analyze <path> [<path> ...]`
 
@@ -202,6 +248,7 @@ Report the code signature status of one or more files. Evaluates notarization st
 ```bash
 SignaroCLI analyze MyApp.app --smart
 SignaroCLI analyze MyApp.app --json
+SignaroCLI analyze MyApp.app MyInstaller.pkg --smart --json
 ```
 
 #### `validate <path> [<path> ...]`
@@ -211,6 +258,7 @@ Run a pre-submission notarization-readiness check. Exits `65` if any file fails 
 ```bash
 SignaroCLI validate MyApp.app --identity-sha1 ABC123 --json
 SignaroCLI validate MyApp.app --mode quick
+SignaroCLI validate MyApp.app MyInstaller.pkg --mode quick --json
 ```
 
 #### `sign <path> [<path> ...]`
@@ -220,7 +268,8 @@ Sign one or more files. When the selection mixes `.app`/`.dmg` and `.pkg`/`.mobi
 ```bash
 SignaroCLI sign MyApp.app --identity-name "Developer ID Application: Acme (TEAMID)"
 SignaroCLI sign MyApp.app MyInstaller.pkg \
-  --identity-name "Developer ID Application: Acme (TEAMID)" \
+  --app-identity-name "Developer ID Application: Acme (TEAMID)" \
+  --pkg-identity-name "Developer ID Installer: Acme (TEAMID)" \
   --clean-attributes
 ```
 
@@ -230,12 +279,14 @@ Attach a notarization ticket to one or more previously notarized files.
 
 ```bash
 SignaroCLI staple MyApp.app MyInstaller.pkg
+SignaroCLI staple MyApp.app --json
 ```
 
 **Deferred stapling by UUID (v4.6+):** Polls a known notarization submission UUID until Accepted, then staples. Exits `65` on rejection; `69` on credential or service failure; `64` on malformed UUID.
 
 ```bash
 SignaroCLI staple --uuid <request-id> MyApp.app --keychain-profile MyProfile
+SignaroCLI staple --uuid <request-id> MyInstaller.pkg --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
 ```
 
 #### `xcode-phase <path.xcodeproj>` (v4.6+)
@@ -252,11 +303,12 @@ SignaroCLI xcode-phase MyApp.xcodeproj --json
 Submit a file to Apple's notarization service and print the request ID. Supports Apple ID + app-specific password, Keychain Profile, and App Store Connect API Key credential modes. Pass `--wait` to block until Apple returns a verdict.
 
 ```bash
-SignaroCLI notarize submit MyApp.zip --keychain-profile MyProfile
+SignaroCLI notarize submit MyApp.zip --keychain-profile MyProfile --wait
+SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO --wait
 SignaroCLI notarize submit MyApp.zip \
-  --api-key-id KEYID \
-  --api-issuer-id ISSUERID \
-  --api-key-path ~/.private_keys/AuthKey_KEYID.p8
+  --key-id KEYID \
+  --issuer-id ISSUERID \
+  --key-path ~/.private_keys/AuthKey_KEYID.p8
 ```
 
 #### `notarize wait <request-id>`
@@ -265,6 +317,7 @@ Poll a previously submitted notarization request ID and exit when Apple returns 
 
 ```bash
 SignaroCLI notarize wait <request-id> --keychain-profile MyProfile
+SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO --timeout 20 --poll-interval 20
 ```
 
 #### `notarize log <request-id>`
@@ -273,6 +326,7 @@ Retrieve Apple's notarization log for a completed submission. Useful for diagnos
 
 ```bash
 SignaroCLI notarize log <request-id> --keychain-profile MyProfile
+SignaroCLI notarize log <request-id> --keychain-profile Jay_SIGNARO --json
 ```
 
 #### `dmg create`
@@ -285,7 +339,11 @@ SignaroCLI dmg create \
   --output ~/Desktop/MyApp.dmg \
   --volume-name "My App 2.0" \
   --background Resources/background.png \
+  --volume-icon Resources/AppVolume.icns \
   --icon-size 96 \
+  --text-size 12 \
+  --icon-x 180 \
+  --icon-y 170 \
   --window-width 560 \
   --window-height 380
 ```
@@ -297,9 +355,21 @@ Full App Distribution workflow: sign → notarize → staple → create DMG → 
 ```bash
 SignaroCLI distribute app \
   --app MyApp.app \
+  --identity-name "Developer ID Application: Acme (TEAMID)" \
+  --keychain-profile Jay_SIGNARO \
+  --output-dir ~/Desktop \
+  --volume-name "My App Installer" \
+  --background Resources/background.png \
+  --volume-icon Resources/AppVolume.icns
+```
+
+```bash
+SignaroCLI distribute app \
+  --app MyApp.app \
   --identity-sha1 ABC123 \
   --keychain-profile MyProfile \
-  --output-dir ~/Desktop
+  --output-dir ~/Desktop \
+  --skip-notarize
 ```
 
 #### `distribute pkg`
@@ -309,16 +379,49 @@ Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → 
 ```bash
 SignaroCLI distribute pkg \
   --pkg MyInstaller.pkg \
-  --identity-sha1 ABC123 \
-  --keychain-profile MyProfile \
+  --identity-name "Developer ID Installer: Acme (TEAMID)" \
+  --keychain-profile Jay_SIGNARO \
   --create-dmg \
+  --volume-name "My Installer" \
+  --background Resources/pkg-bg.png \
   --icon-x 260 \
   --icon-y 170
+```
+
+### End-to-End Example (Profile-Based)
+
+```bash
+# 1) Store credentials once
+xcrun notarytool store-credentials Jay_SIGNARO \
+  --apple-id you@example.com \
+  --team-id TEAMID
+
+# 2) Sign
+SignaroCLI sign MyApp.app \
+  --identity-name "Developer ID Application: Acme (TEAMID)" \
+  --clean-attributes
+
+# 3) Submit (non-blocking)
+SignaroCLI notarize submit MyApp.app --keychain-profile Jay_SIGNARO
+
+# 4) Wait for verdict
+SignaroCLI notarize wait <request-id> --keychain-profile Jay_SIGNARO
+
+# 5) Staple and verify
+SignaroCLI staple MyApp.app
+xcrun stapler validate MyApp.app
+spctl --assess --type exec --verbose MyApp.app
 ```
 
 ---
 
 ## Notarization Credential Modes
+
+| Mode | Input Required | Recommended For |
+|:---|:---|:---|
+| **App-Specific Password** | Apple ID + Password | Local development |
+| **Keychain Profile** | Profile Name | Local CI / Single agents |
+| **API Key (.p8)** | Key ID, Issuer ID, .p8 file | Scalable CI / Headless servers |
 
 **Apple ID + App-Specific Password**
 Generate an app-specific password at [appleid.apple.com](https://appleid.apple.com). Suitable for personal development machines. Not recommended for CI environments where the Apple ID should not be persisted.
@@ -382,6 +485,17 @@ IdentityManager CertificateLifecycleMonitor  WorkflowCheckpointStore
 SubmissionLogger BatchSigningCoordinator  BatchDistributionCoordinator
 ```
 
+| Feature | GUI Application | Command-Line Interface |
+|:---|:---:|:---:|
+| **App Distribution Pipeline** | ✅ | ✅ |
+| **PKG Distribution Pipeline** | ✅ | ✅ |
+| **DMG Layout Customization** | ✅ (Interactive Preview) | ✅ (Flags & Scripts) |
+| **Smart Entitlement Analysis** | ✅ | ✅ |
+| **Batch Signing & Checkpoints** | ✅ | ❌ (Single-file focus) |
+| **Working Folder Management** | ✅ | ❌ |
+| **Submission History Browser** | ✅ | ❌ (`notarize log` only) |
+| **Expiry Notifications** | ✅ | ❌ |
+
 Key design constraints:
 - All operations execute through `ProcessRunner`, an actor-serialized wrapper around `Process` that prevents concurrent invocations of tools that do not support it (`codesign`, `productsign`, `notarytool`).
 - No shared mutable state between the GUI and CLI. Both link the same modules but each binary maintains its own log namespace and credential surface.
@@ -394,11 +508,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.1 |
-| Build date | 2026-04-26 |
+| Current version | 5.0 Build 1.3 |
+| Build date | 2026-04-27 |
 | `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.1 |
-| CLI version string | `SignaroCLI 5.0.1.1` |
+| `CURRENT_PROJECT_VERSION` | 1.3 |
+| CLI version string | `SignaroCLI 5.0.1.3` |
 | Platform | macOS 13.5+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 64 tests across 10 classes in `SignaroTests` |
