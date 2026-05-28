@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-50-build-14)
+- [What's New](#whats-new-in-version-50-build-152)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -28,20 +28,30 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Build 1.5.2
+## What's New in Version 5.0 Build 1.5.2
 
-### Fixed
+Build 1.5.2 is a Swift type-checker and API modernization patch on top of Build 1.5.1.
 
-- **Resolved all "compiler unable to type-check expression" build errors.** A SwiftUI API modernization pass in Build 1.5.1 introduced `foregroundStyle()` throughout the codebase. Several call sites mixed `Color` values (`.red`, `.orange`, `.green`) with `HierarchicalShapeStyle` values (`.primary`, `.secondary`) in the same ternary expression — the two are different concrete types, so the type-checker failed to unify them. All such ternaries are now wrapped in `AnyShapeStyle()` to give the compiler a single erased type. Additionally, bare `.accentColor` dot-shorthand inside `foregroundStyle()` was replaced with the explicit `Color.accentColor` form since `ShapeStyle` has no `.accentColor` member. 45 occurrences fixed across 18 files.
+- **Fixed: Ghost sheets after credential dismiss.** The post-credential deferred action now uses a cancellable `DispatchWorkItem` that is cancelled the moment the credential sheet closes, preventing a second sheet from opening on stale state.
+- **Fixed: Corrupt resume checkpoints are logged and cleaned up.** A failed checkpoint JSON decode now prints the error and discards the corrupt store entry instead of silently dropping the resume prompt.
+- **Fixed: Batch signing logs abandonment and checkpoints on cancellation.** Task abandonment is now logged with the workflow UUID; mid-flight cancellation saves a checkpoint for the current file so resume picks up at the right position.
+- **Fixed: `codesign` validation no longer blocks the cooperative thread pool.** All `waitUntilExit()` calls in signature validation are now dispatched on `DispatchQueue.global`, freeing the Swift executor for concurrent work.
 
-- **Resolved "compiler unable to type-check expression in reasonable time" errors in large view bodies.** `MainContentView.body` (346 lines, 25+ chained modifiers) and `NotarizationViews.body` (443 lines) exceeded Swift's practical type-checking budget. Both were split into private layered computed properties (`coreContent` → `withSheets` → `withObservers` → `withAlerts`, etc.) capping each layer at ≤10 modifiers. Inline `Binding(get:set:)` expressions inside `.alert` modifier chains were extracted to named computed `Binding` properties.
+---
 
-- **Reduced type-checker load from complex ForEach row bodies and ternary clusters.** Eight files had `ForEach` closures or modifier chains where repeated inline ternary expressions (some triple-nested) or multi-argument view calls exceeded the type-checker's expression-complexity budget. Fixes: repeated ternary conditions extracted to named `let` bindings before the view, multi-argument views inside `Menu`/`ForEach` extracted to `@ViewBuilder` helper functions. Files: `NotarizationWorkflowDialog`, `AppDistributionWorkflowDialog`, `PkgDistributionWorkflowDialog`, `DMGCreationDialog`, `CertificateViews`, `FileListSectionView`, `LogViewerDialog`, `SubmissionLogViewer`.
+### Build 1.5 — Create DMG workflow overhaul
 
-### Build
+Complete overhaul of the standalone Create DMG dialog — full workflow parity with App Distribution and PKG Distribution, including a step-based progress view, post-creation signing and notarization, live Apple status feedback, and automatic certificate selection.
 
-- `CURRENT_PROJECT_VERSION` `1.5.2`. `MARKETING_VERSION` `5.0`.
-- CLI version string `5.0.1.5.2`.
+- **New: Step-based workflow progress view.** When Create DMG is tapped, the configuration form switches to a step-list view identical to App Distribution — each step (Create DMG → Sign DMG → Notarize DMG → Staple DMG) ticks from pending circle to spinner to checkmark/xmark in real time. A running-step banner shows current detail text; a final result banner appears on completion. The separate success alert is gone.
+- **New: Sign, notarize, and staple from the Create DMG dialog.** A "Post-Creation Actions" section appears when a compatible Developer ID Application certificate is selected. Toggle **Sign DMG** to code-sign after creation. Enable **Submit for notarization** (requires credentials) to submit to Apple and wait for approval, with an optional **Staple ticket** step to embed the ticket for offline Gatekeeper assessment.
+- **New: Live Apple notarization status and request ID.** The Notarize DMG step row shows Apple's submission request ID, per-step duration, and the acceptance or rejection message inline — no need to open the Log Viewer to see what Apple returned.
+- **New: DMG creation logged to Operation Logs.** The Create DMG step is now a `DMG_CREATION` entry in the Operation Logs viewer, completing a full four-entry audit trail (create → sign → notarize → staple) per workflow run.
+- **New: Automatic certificate selection.** When the Create DMG dialog opens, the app auto-selects the best available Developer ID Application certificate regardless of what is active in the main view, preventing the "Incompatible certificate" warning on open.
+- **Fixed: Multi-file DMG icon layout positions all items.** When creating a DMG from multiple files with custom icon positions, only the first file was being placed. All entries in the icon positions map are now applied across all DMG creation paths.
+- **Fixed: Create DMG output filename follows Volume Name.** Leaving File Name empty now produces a `.dmg` named from the Volume Name instead of falling back to `Archive.dmg`.
+- **Fixed: DMG preview layout recursion warning.** Preview auto-expand size updates are deferred to the next main-loop tick across standalone Create DMG, App Distribution, and PKG Distribution.
+- **Fixed: Notarization pre-flight failures now appear in Operation Logs.** Files that fail internal validation before reaching Apple (unsigned binary, missing hardened runtime, etc.) now log a failure entry in Operation Logs, consistent with how App Distribution records failures.
 
 > For older release notes and historical updates, please see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
@@ -86,6 +96,7 @@ Professional disk image creation with full Finder layout customization via a mou
 - **Encryption**: AES-128 and AES-256, with password piped via stdin to avoid shell-history exposure.
 - **Segmentation**: `hdiutil convert -segmentSize` for split DMG sets.
 - **Inline live preview**: Drag-to-position editing of icon placements with grid overlay, rulers, snap-to-guides, and auto-expand when icons are dragged beyond the current window bounds. Persistent per-surface presentation preferences via `@AppStorage`. A Preferences action resets presentation defaults for all three DMG surfaces simultaneously.
+- **Output filename follows the volume name by default.** In the standalone Create DMG dialog, leaving File Name empty makes the produced `.dmg` use the current Volume Name, with `.dmg` appended automatically. Entering a File Name still overrides this behavior.
 - **All three DMG surfaces at full parity (v5.0+).** App Distribution workflow dialog, PKG Distribution workflow dialog, and the standalone Create DMG dialog all expose the same inline preview and layout controls. No separate sheet.
 
 ### Distribution Workflows
@@ -136,7 +147,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.4
+SignaroCLI --version    # → SignaroCLI 5.0.1.5.2
 SignaroCLI --help
 ```
 
@@ -144,7 +155,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.0.1.0)
+OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.2)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -230,7 +241,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
 | `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.4` and exit 0. |
+| `--version` | Print `SignaroCLI 5.0.1.5.2` and exit 0. |
 
 ---
 
@@ -594,27 +605,16 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.4 |
-| Build date | 2026-04-27 |
+| Current version | 5.0 Build 1.5.2 |
+| Build date | 2026-05-27 |
 | `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.4 |
-| CLI version string | `SignaroCLI 5.0.1.4` |
+| `CURRENT_PROJECT_VERSION` | 1.5.2 |
+| CLI version string | `SignaroCLI 5.0.1.5.2` |
 | Platform | macOS 13.5+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 64 tests across 10 classes in `SignaroTests` |
-
----
-## 🌐 Connect With Me
-- [GitHub](https://github.com/hov172)  
-- [PowerShell Gallery](https://www.powershellgallery.com/profiles/hov172)  
-- 📨 Slack: **@Hov172**  
-- 🕹️ Discord: **Jay172_**  
-- [LinkedIn](https://www.linkedin.com/in/jesus-a-785bb616?trk=people-guest_people_search-card)  
-- 🐦 [Twitter / X (@AyalaSolutions)](https://twitter.com/AyalaSolutions)  
-- <a href="https://bsky.app/profile/ayalasolutions.bsky.social"><img src="https://raw.githubusercontent.com/bluesky-social/social-app/main/assets/logo.png" width="20" alt="Bluesky Logo"></a> [@AyalaSolutions](https://bsky.app/profile/ayalasolutions.bsky.social)  
-- [![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/hov172)  
-- 📧 *Contact via GitHub, Social accounts issues or discussions*  
+| Test suite | 84 tests across 12 classes in `SignaroTests` |
 
 ---
 
-⭐ *If you find my tools useful, consider giving them a star to support future development!*
+- [GitHub](https://github.com/hov172)
+- Slack: **@Hov172** · Discord: **Jay172_**

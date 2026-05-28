@@ -1,5 +1,65 @@
 # Release Notes
 
+## 5.0 Build 1.5.2 — 2026-05-27
+
+### Fixed
+
+- **Resolved all "compiler unable to type-check expression" build errors.** A SwiftUI API modernization pass in Build 1.5.1 introduced `foregroundStyle()` throughout the codebase. Several call sites mixed `Color` values (`.red`, `.orange`, `.green`) with `HierarchicalShapeStyle` values (`.primary`, `.secondary`) in the same ternary expression — the two are different concrete types, so the type-checker failed to unify them. All such ternaries are now wrapped in `AnyShapeStyle()` to give the compiler a single erased type. Additionally, bare `.accentColor` dot-shorthand inside `foregroundStyle()` was replaced with the explicit `Color.accentColor` form since `ShapeStyle` has no `.accentColor` member. 45 occurrences fixed across 18 files.
+- **Resolved "compiler unable to type-check expression in reasonable time" errors in large view bodies.** `MainContentView.body` (346 lines, 25+ chained modifiers) and `NotarizationViews.body` (443 lines) exceeded Swift's practical type-checking budget. Both were split into private layered computed properties (`coreContent` → `withSheets` → `withObservers` → `withAlerts`, etc.) capping each layer at ≤10 modifiers. Inline `Binding(get:set:)` expressions inside `.alert` modifier chains were extracted to named computed `Binding` properties.
+- **Reduced type-checker load from complex ForEach row bodies and ternary clusters.** Eight files had `ForEach` closures or modifier chains where repeated inline ternary expressions (some triple-nested) or multi-argument view calls exceeded the type-checker's expression-complexity budget. Fixes: repeated ternary conditions extracted to named `let` bindings before the view, multi-argument views inside `Menu`/`ForEach` extracted to `@ViewBuilder` helper functions. Files: `NotarizationWorkflowDialog`, `AppDistributionWorkflowDialog`, `PkgDistributionWorkflowDialog`, `DMGCreationDialog`, `CertificateViews`, `FileListSectionView`, `LogViewerDialog`, `SubmissionLogViewer`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.2`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.2`.
+
+---
+
+## 5.0 Build 1.5.1 — 2026-05-27
+
+### Fixed
+
+- **Post-credential sheet action can no longer fire after dismiss.** The 0.5-second deferred dispatch that opens a distribution or notarization workflow after credentials are confirmed was a bare `DispatchQueue.asyncAfter` with no cancellation token. If the credential sheet was dismissed before the delay elapsed, the closure still fired and mutated view state — causing ghost sheets to appear. The dispatch is now a stored `DispatchWorkItem` that is explicitly cancelled via `onChange(of: showStatusCredentialDialog)` the moment the sheet closes. File: `MainContentView.swift`.
+- **Corrupt resume checkpoints are now logged and discarded instead of silently dropped.** When a batch-signing or batch-distribution checkpoint blob failed JSON decoding (e.g. after a schema change between builds), the `guard let context = try? JSONDecoder()…else { return }` path returned silently — the resume prompt vanished with no indication that progress was lost. Both decode sites now use an explicit `do/catch` that prints the decoding error with the workflow kind and discards the corrupt store entry via `discardCheckpoint`. File: `MainContentView.swift`.
+- **Batch signing coordinator logs task abandonment and flushes an in-progress checkpoint on cancellation.** If the `BatchSigningCoordinator` was deallocated before its active task ran, the `guard let self else { return }` exited silently. The workflow UUID is now captured before the guard so abandonment is logged. Separately, when the task is cancelled mid-batch the `execute` loop now saves a checkpoint for the current in-flight file index (not just the last completed one), so resume picks up at the right point. File: `BatchSigningCoordinator.swift`.
+- **`codesign` validation no longer blocks the Swift cooperative thread pool.** `checkCodeSigning(appBundle:)` and `checkCodeSigningDMG(diskImage:)` called `process.waitUntilExit()` — a blocking call — directly inside `async` functions. Under batch notarization this starves the cooperative executor. All four `run()`/`waitUntilExit()` pairs are now wrapped in `withCheckedThrowingContinuation` dispatched onto `DispatchQueue.global(qos: .userInitiated)`, moving the blocking wait off the thread pool. File: `NotarizationOperations.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.1`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.1`.
+
+---
+
+## 5.0 Build 1.5 — 2026-05-26
+
+### New
+
+- **Step-based workflow progress view in Create DMG dialog.** When "Create DMG" is tapped the configuration form is replaced by a step-list view identical in style to the App Distribution and PKG Distribution dialogs. Each active step — Create DMG, Sign DMG, Notarize DMG, Staple DMG — is listed with a pending circle, live spinner, or checkmark/xmark as it progresses. A banner at the top shows the currently running step with detail text. A final result banner (green/red) appears on completion. The separate success alert popup is gone — result is shown inline with a Done button. Files: `DMGCreationDialog.swift`, `MainContentView.swift`.
+- **Sign DMG after creation.** The standalone Create DMG dialog includes a "Post-Creation Actions" section. When a compatible Developer ID Application certificate is selected, a **Sign DMG after creation** toggle appears. Signing runs immediately after a successful `hdiutil` create using `codesign` in-place. File: `DMGCreationDialog.swift`, `MainContentView.swift`.
+- **Notarize and staple DMG after creation.** When signing is enabled and notarization credentials are configured, a **Submit for notarization** sub-toggle appears with an optional **Staple ticket** toggle. Notarization submits to Apple with `waitForCompletion: true`; stapling embeds the ticket for offline Gatekeeper assessment. Files: `DMGCreationDialog.swift`, `MainContentView.swift`.
+- **Live Apple notarization status and request ID in the step view.** The Notarize DMG step row shows Apple's submission request ID, per-step duration, and the final acceptance or rejection message as returned by `notarytool`. On failure, the first line of Apple's response appears directly in the step row for immediate troubleshooting without opening the Log Viewer. File: `MainContentView.swift`.
+- **DMG creation logged to Operation Logs.** The Create DMG step is now recorded as a `DMG_CREATION` entry in `SubmissionLogger`, matching the log format of signing, notarization, and stapling. The full workflow — DMG creation, signing, notarization, stapling — is now traceable as four consecutive entries in the Operation Logs viewer. Files: `SubmissionLogger.swift`, `MainContentView.swift`.
+- **Auto-selection of correct certificate when DMG dialog opens.** When the Create DMG dialog is opened, `bestIdentity(for: .application)` is called to pre-select the best available Developer ID Application certificate, regardless of which certificate is active in the main view. This prevents the "Incompatible certificate" warning appearing on open when an Installer or other certificate type is selected. Falls back to the currently selected identity if no application certificate is available. File: `MainContentView.swift`.
+
+### Fixed
+
+- **Multi-file DMG icon layout now positions all items.** `buildCustomizationScript` previously hardcoded `set position` for a single item (`appName`) plus the Applications alias, silently dropping all other entries in `iconPositions`. For multi-file DMGs with custom icon positions, files beyond the first landed wherever Finder placed them. The fix iterates all entries in `iconPositions` and emits a `set position` line for each, applied across all DMG creation paths. File: `DMGCreationOperations.swift`.
+- **Create DMG custom name now controls the output filename.** Changing the Volume Name while leaving File Name empty now updates the generated `.dmg` filename instead of keeping the multi-file fallback `Archive.dmg`. File: `DMGCreationDialog.swift`.
+- **DMG preview auto-expand no longer mutates layout synchronously.** Standalone Create DMG, App Distribution, and PKG Distribution now defer preview auto-expand size updates to the next main-loop tick, avoiding AppKit layout recursion warnings. Files: `DMGCreationDialog.swift`, `AppDistributionWorkflowDialog.swift`, `PkgDistributionWorkflowDialog.swift`.
+- **Notarization pre-flight failures now appear in Operation Logs.** When `submitForNotarization` rejected a file during internal validation (unsigned binary, missing hardened runtime, etc.) it returned early without writing a log entry. The early-return path now calls `SubmissionLogger.logNotarizationSubmission` with `success: false`, so all notarization attempts — including blocked ones — appear in the Operation Logs viewer, consistent with App Distribution failure logging. File: `NotarizationOperations.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5`.
+- `release.sh`: fixed `cp -R` nesting bug — when `dist/Signaro.app` already existed the script would nest the app inside itself (`dist/Signaro.app/Signaro.app`); a `rm -rf` before the copy prevents this.
+- `release.sh`: `SignaroCLI` is now re-signed using `Signaro/SignaroCLI.entitlements` (empty dict) to strip the `com.apple.security.get-task-allow` debug entitlement that Xcode embeds in Release builds and Apple's notarization service rejects.
+- `create-installer.sh`: added `--skip-signing` flag to skip code signing, notarization, and stapling for local testing.
+- `Signaro/SignaroCLI.entitlements` added — empty entitlements dict used when re-signing SignaroCLI for distribution.
+
+---
+
 ## 5.0 Build 1.4 — 2026-04-27
 
 CLI parity completion: four features that previously existed only in the GUI now have full CLI equivalents, along with the GUI wiring that was missing for certificate expiry notifications, distribution workflow logging, and batch signing cancellation.
