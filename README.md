@@ -28,17 +28,20 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.0 Build 1.4
+## What's New in Build 1.5.2
 
-CLI parity completion — four GUI-only features now have full CLI equivalents, and the matching GUI wiring gaps are closed.
+### Fixed
 
-- **New: `folder sign <dir>`.** Sign all signable files in a directory. Auto-routes each file to the correct certificate class; supports `--recursive`, `--dry-run`, `--identity <name>`, and `--clean-attributes`. JSON output reports per-file status and a summary count.
-- **New: `history list`.** Browse the local submission history from the command line. Filter by operation type (`--operation <type>`) and cap result size (`--limit N`). JSON output surfaces file path, operation, success flag, timestamp, processing time, and Apple response.
-- **Updated: `identities list` expiry classification.** Every identity now includes `expiryStatus`, `expiresInDays`, and `expiresAt` fields in JSON output. Human-readable output appends `[expires in N days — STATUS]` after each name.
-- **Fixed: Certificate expiry notifications now actually fire.** `notifyExpiringCertificates` is wired into the daily certificate check, delivering a `UNUserNotification` once per certificate per day at warning/imminent/expired thresholds. The Notifications preference toggle now correctly controls this via `Signaro_CertExpiryNotificationsEnabled`.
-- **Fixed: Distribution runs now appear in Submission History.** `logDistributionRun(...)` is called at both success and failure exit points in the App and PKG distribution workflows. App and PKG distribution events are now browsable in the History sheet alongside signing and notarization entries.
-- **Fixed: Batch signing Cancel button.** The Cancel button in the batch progress row now correctly cancels the running `BatchSigningCoordinator` operation.
-- **Build metadata bump.** `CURRENT_PROJECT_VERSION` is now `1.4` (`MARKETING_VERSION` remains `5.0`), and the CLI version string is now `SignaroCLI 5.0.1.4`.
+- **Resolved all "compiler unable to type-check expression" build errors.** A SwiftUI API modernization pass in Build 1.5.1 introduced `foregroundStyle()` throughout the codebase. Several call sites mixed `Color` values (`.red`, `.orange`, `.green`) with `HierarchicalShapeStyle` values (`.primary`, `.secondary`) in the same ternary expression — the two are different concrete types, so the type-checker failed to unify them. All such ternaries are now wrapped in `AnyShapeStyle()` to give the compiler a single erased type. Additionally, bare `.accentColor` dot-shorthand inside `foregroundStyle()` was replaced with the explicit `Color.accentColor` form since `ShapeStyle` has no `.accentColor` member. 45 occurrences fixed across 18 files.
+
+- **Resolved "compiler unable to type-check expression in reasonable time" errors in large view bodies.** `MainContentView.body` (346 lines, 25+ chained modifiers) and `NotarizationViews.body` (443 lines) exceeded Swift's practical type-checking budget. Both were split into private layered computed properties (`coreContent` → `withSheets` → `withObservers` → `withAlerts`, etc.) capping each layer at ≤10 modifiers. Inline `Binding(get:set:)` expressions inside `.alert` modifier chains were extracted to named computed `Binding` properties.
+
+- **Reduced type-checker load from complex ForEach row bodies and ternary clusters.** Eight files had `ForEach` closures or modifier chains where repeated inline ternary expressions (some triple-nested) or multi-argument view calls exceeded the type-checker's expression-complexity budget. Fixes: repeated ternary conditions extracted to named `let` bindings before the view, multi-argument views inside `Menu`/`ForEach` extracted to `@ViewBuilder` helper functions. Files: `NotarizationWorkflowDialog`, `AppDistributionWorkflowDialog`, `PkgDistributionWorkflowDialog`, `DMGCreationDialog`, `CertificateViews`, `FileListSectionView`, `LogViewerDialog`, `SubmissionLogViewer`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.2`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.2`.
 
 > For older release notes and historical updates, please see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
