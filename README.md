@@ -30,9 +30,10 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ## What's New in Version 5.0 Build 1.5.3
 
-Build 1.5.3 is a notarization status-handling bug-fix patch on top of Build 1.5.2.
+Build 1.5.3 is a notarization status-handling and embedded-CLI build fix on top of Build 1.5.2.
 
 - **Fixed: "In Progress" notarizations no longer reported as rejected.** When a submission was made with wait-for-completion and Apple returned an interim `status: In Progress`, the GUI submit path collapsed Apple's three states (`Accepted` / `In Progress` / `Invalid`) into a binary "Accepted or rejected" check — so a still-processing submission was incorrectly labeled "Apple rejected the submission." The submit path now performs a proper three-way check: `Accepted` succeeds and fetches the audit log, `In Progress` reports that Apple is still processing (explicitly *not* a rejection, with the request ID and a hint to re-check shortly), and only `Invalid`/`Rejected` reports a rejection. The check prefers the authoritative parsed JSON `status` field and, when falling back to raw output, anchors on `status:` rather than bare substring matches so appended log text can't trigger a false rejection. File: `NotarizationOperations.swift`.
+- **Fixed: Embedded-CLI archive failing with "SignaroCLI not found."** Archiving the *Signaro (Embedded CLI)* scheme could fail because the app target had no dependency on the `SignaroCLI` tool, so the CLI was not built into the products directory before the Release-Embedded phase that embeds and signs it into `Signaro.app/Contents/Helpers`. An explicit `Signaro → SignaroCLI` target dependency now guarantees the CLI builds first, and the embed phase skips code signing on unsigned/CI builds instead of failing. File: `Signaro.xcodeproj/project.pbxproj`.
 
 ---
 
