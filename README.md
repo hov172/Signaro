@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.0 Build 1.5.2 (2026-05-27)**
+**Current version: 5.0 Build 1.5.3 (2026-06-06)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-50-build-152)
+- [What's New](#whats-new-in-version-50-build-153)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -28,14 +28,11 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.0 Build 1.5.2
+## What's New in Version 5.0 Build 1.5.3
 
-Build 1.5.2 is a Swift type-checker and API modernization patch on top of Build 1.5.1.
+Build 1.5.3 is a notarization status-handling bug-fix patch on top of Build 1.5.2.
 
-- **Fixed: Ghost sheets after credential dismiss.** The post-credential deferred action now uses a cancellable `DispatchWorkItem` that is cancelled the moment the credential sheet closes, preventing a second sheet from opening on stale state.
-- **Fixed: Corrupt resume checkpoints are logged and cleaned up.** A failed checkpoint JSON decode now prints the error and discards the corrupt store entry instead of silently dropping the resume prompt.
-- **Fixed: Batch signing logs abandonment and checkpoints on cancellation.** Task abandonment is now logged with the workflow UUID; mid-flight cancellation saves a checkpoint for the current file so resume picks up at the right position.
-- **Fixed: `codesign` validation no longer blocks the cooperative thread pool.** All `waitUntilExit()` calls in signature validation are now dispatched on `DispatchQueue.global`, freeing the Swift executor for concurrent work.
+- **Fixed: "In Progress" notarizations no longer reported as rejected.** When a submission was made with wait-for-completion and Apple returned an interim `status: In Progress`, the GUI submit path collapsed Apple's three states (`Accepted` / `In Progress` / `Invalid`) into a binary "Accepted or rejected" check — so a still-processing submission was incorrectly labeled "Apple rejected the submission." The submit path now performs a proper three-way check: `Accepted` succeeds and fetches the audit log, `In Progress` reports that Apple is still processing (explicitly *not* a rejection, with the request ID and a hint to re-check shortly), and only `Invalid`/`Rejected` reports a rejection. The check prefers the authoritative parsed JSON `status` field and, when falling back to raw output, anchors on `status:` rather than bare substring matches so appended log text can't trigger a false rejection. File: `NotarizationOperations.swift`.
 
 ---
 
@@ -147,7 +144,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.5.2
+SignaroCLI --version    # → SignaroCLI 5.0.1.5.3
 SignaroCLI --help
 ```
 
@@ -155,7 +152,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.2)
+OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.3)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -241,7 +238,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
 | `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.5.2` and exit 0. |
+| `--version` | Print `SignaroCLI 5.0.1.5.3` and exit 0. |
 
 ---
 
@@ -605,11 +602,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.5.2 |
+| Current version | 5.0 Build 1.5.3 |
 | Build date | 2026-05-27 |
 | `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.5.2 |
-| CLI version string | `SignaroCLI 5.0.1.5.2` |
+| `CURRENT_PROJECT_VERSION` | 1.5.3 |
+| CLI version string | `SignaroCLI 5.0.1.5.3` |
 | Platform | macOS 13.5+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 84 tests across 12 classes in `SignaroTests` |

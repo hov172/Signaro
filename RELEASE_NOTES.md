@@ -1,5 +1,18 @@
 # Release Notes
 
+## 5.0 Build 1.5.3 — 2026-06-06
+
+### Fixed
+
+- **Notarization submissions still "In Progress" are no longer reported as rejected.** In the GUI submit path (`submitForNotarization` with `waitForCompletion: true`), the result handler determined success with a single `output.localizedCaseInsensitiveContains("Accepted")` check and sent everything else — including Apple's interim `status: In Progress` — to a branch that appended "Notarization: Apple rejected the submission." Apple reports three distinct states (`Accepted`, `In Progress`, `Invalid`/`Rejected`); collapsing them into a binary caused still-processing submissions (e.g. immediately after `Successfully received submission info`) to be surfaced as rejections. The handler now performs an explicit three-way classification: `Accepted` marks success and fetches the audit log; `In Progress` is reported as still-processing (not a rejection, with the request ID and a re-check hint); only `Invalid`/`Rejected` is reported as a rejection. Classification prefers the authoritative parsed JSON `status` field and, when falling back to raw output, anchors on the `status:` prefix instead of bare `contains("invalid"/"rejected")` so appended audit-log or error text cannot trigger a false rejection. File: `NotarizationOperations.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.3`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.3`.
+
+---
+
 ## 5.0 Build 1.5.2 — 2026-05-27
 
 ### Fixed
