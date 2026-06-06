@@ -1,5 +1,18 @@
 # Release Notes
 
+## 5.0 Build 1.5.4 — 2026-06-06
+
+### Fixed
+
+- **App archives are distributable again (Mac App Archive, not Generic Xcode Archive).** After Build 1.5.3 added the `Signaro → SignaroCLI` target dependency, every app archive also built the `SignaroCLI` command-line tool. The tool target had no `SKIP_INSTALL` setting and command-line tools default to `SKIP_INSTALL = NO`, so Xcode installed `SignaroCLI` into the archive at `Products/usr/local/bin/`. An archive that contains anything besides the `.app` is demoted from a **Mac App Archive** to a **Generic Xcode Archive**, so the Xcode Organizer offered only **"Distribute Content"** instead of the **"Distribute App"** flow (Developer ID export and notarization). `SKIP_INSTALL = YES` is now set on all three `SignaroCLI` configurations (Debug, Release, Release-Embedded) so the standalone tool no longer lands in the archive. The CLI is still built, and is still embedded and signed into `Signaro.app/Contents/Helpers` by the Release-Embedded phase. File: `Signaro.xcodeproj/project.pbxproj`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.4`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.4`.
+
+---
+
 ## 5.0 Build 1.5.3 — 2026-06-06
 
 ### Fixed
