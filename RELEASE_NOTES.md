@@ -1,5 +1,19 @@
 # Release Notes
 
+## 5.0 Build 1.5.5 — 2026-06-08
+
+### Changed
+
+- **Recommendation banner now uses severity-based semantic colors instead of accent blue.** The certificate recommendation banner previously rendered every message on a solid accent-blue background — the same blue used by the primary "Sign, Notarize, Staple & Distribute" action button. With both on screen at once the informational banner competed with the call-to-action and read as if it were also clickable. The banner now derives its color and icon from the recommendation's severity: **red** (❌) for problems that will fail, **amber** (⚠️/🔧) for cautions to fix before signing — including wrong-certificate-for-file-type mismatches, **green** (✅) for good-to-go states, and neutral **gray** (🚀/🔒/💡) for optional next-step tips. All tints are muted (~13% fills) so accent blue is reserved exclusively for the primary action button. File: `CertificateViews.swift`.
+- **Validation Mode segmented control uses a muted selected tint.** The selected segment ("Detailed (Recommended)") previously filled with full-saturation accent blue, adding to the blue noise immediately beside the primary button. It now uses a muted blue tint (`accentColor` at 50% opacity) so the bold accent blue stays unique to the call-to-action. File: `ValidationModePickerView.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.5.5`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.5.5`.
+
+---
+
 ## 5.0 Build 1.5.4 — 2026-06-06
 
 ### Fixed
