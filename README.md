@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.0 Build 1.5.4 (2026-06-06)**
+**Current version: 5.0 Build 1.5.5 (2026-06-08)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-50-build-154)
+- [What's New](#whats-new-in-version-50-build-155)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -28,7 +28,14 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.0 Build 1.5.4
+## What's New in Version 5.0 Build 1.5.5
+
+Build 1.5.5 is a UI hierarchy refinement: the accent color is now reserved for the primary action so it no longer competes with informational elements.
+
+- **Changed: Recommendation banner uses severity-based semantic colors.** The certificate recommendation banner used the same solid accent blue as the primary "Sign, Notarize, Staple & Distribute" button, so the two competed and the banner read as if it were clickable. The banner now colors itself by severity — **red** (will fail), **amber** (fix before signing, including wrong-certificate-for-file-type mismatches), **green** (good to go), and neutral **gray** (optional next-step tips) — with muted fills so accent blue belongs to the action button alone. File: `CertificateViews.swift`.
+- **Changed: Validation Mode segmented control uses a muted selected tint.** The selected "Detailed (Recommended)" segment no longer fills with full-saturation accent blue, keeping the bold blue unique to the primary button. File: `ValidationModePickerView.swift`.
+
+### Carried over from Build 1.5.4
 
 Build 1.5.4 is an archive-distribution fix on top of Build 1.5.3.
 
@@ -149,7 +156,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.5.4
+SignaroCLI --version    # → SignaroCLI 5.0.1.5.5
 SignaroCLI --help
 ```
 
@@ -157,7 +164,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.4)
+OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.5)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -243,7 +250,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
 | `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.5.4` and exit 0. |
+| `--version` | Print `SignaroCLI 5.0.1.5.5` and exit 0. |
 
 ---
 
@@ -607,11 +614,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.5.4 |
-| Build date | 2026-06-06 |
+| Current version | 5.0 Build 1.5.5 |
+| Build date | 2026-06-08 |
 | `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.5.4 |
-| CLI version string | `SignaroCLI 5.0.1.5.4` |
+| `CURRENT_PROJECT_VERSION` | 1.5.5 |
+| CLI version string | `SignaroCLI 5.0.1.5.5` |
 | Platform | macOS 13.5+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 84 tests across 12 classes in `SignaroTests` |
