@@ -542,7 +542,7 @@ Create a key in App Store Connect under Users and Access → Integrations → Ap
 
 ## System Requirements
 
-- **macOS 13.5 (Ventura)** or later. Universal Binary (Apple Silicon and Intel).
+- **macOS 14.0 (Sonoma)** or later. Universal Binary (Apple Silicon and Intel).
 - **Xcode Command Line Tools** (`xcode-select --install`). Required for `codesign`, `productsign`, `notarytool`, `stapler`, and `hdiutil`.
 - **Apple Developer Account** with a valid Developer ID Application and/or Developer ID Installer certificate. Code signing and notarization require a paid developer program membership.
 - **Automation permission for Finder** (macOS Security & Privacy). Requested automatically on first DMG creation with custom layout. Required for the Finder AppleScript `set position of item` calls that apply icon positions and window geometry to DMG volumes.
@@ -619,7 +619,7 @@ Key design constraints:
 | `MARKETING_VERSION` | 5.0 |
 | `CURRENT_PROJECT_VERSION` | 1.5.5 |
 | CLI version string | `SignaroCLI 5.0.1.5.5` |
-| Platform | macOS 13.5+, Universal Binary |
+| Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 84 tests across 12 classes in `SignaroTests` |
 
