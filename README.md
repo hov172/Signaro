@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.1 (2026-06-28)**
+**Current version: 5.5 Build 1.7.2 (2026-06-29)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-171)
+- [What's New](#whats-new-in-version-55-build-172)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -27,6 +27,17 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 - [Troubleshooting](#troubleshooting)
 - [Architecture Overview](#architecture-overview)
 - [Version Information](#version-information)
+
+---
+
+## What's New in Version 5.5 Build 1.7.2
+
+### Provisioning profile classification and debug signing fixes (Build 1.7.2)
+
+- **Ad Hoc profile misclassification fixed** — provisioning profiles with a `ProvisionedDevices` key present but an empty device list were incorrectly classified as App Store. The type waterfall now tests whether the key exists in the plist (not whether the array is non-empty), so zero-device Ad Hoc profiles resolve correctly to the Ad Hoc distribution type.
+- **Empty-device Ad Hoc/Development warning** — when an Ad Hoc or Development profile has no registered devices, the analysis card now shows an explicit warning: the re-signed IPA cannot install on any device. Previously `codesign --verify` still reported success, producing a silently uninstallable IPA with no user-visible indication of the problem.
+- **Debugger attachment fixed (Hardened Runtime + Manual signing)** — added `Signaro-Debug.entitlements` with `com.apple.security.get-task-allow = true` for the Debug build configuration. With Hardened Runtime enabled and Manual signing active, Xcode does not auto-inject this entitlement; the missing entitlement was causing every debug session to be killed immediately (`os/kern failure 0x5`, exit code 9). The Release configuration retains the original `Signaro.entitlements` (without `get-task-allow`) to keep notarization clean.
+- **Malformed `ProvisionedDevices` type-mismatch fixed** — profiles where the `ProvisionedDevices` key holds a non-`[String]` value now fall through to App Store classification rather than silently becoming Ad Hoc with an empty device list.
 
 ---
 
@@ -243,7 +254,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.1)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.2)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -829,11 +840,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.1 |
-| Build date | 2026-06-28 |
+| Current version | 5.5 Build 1.7.2 |
+| Build date | 2026-06-29 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.1 |
-| CLI version string | `SignaroCLI 5.5.1.7.1` |
+| `CURRENT_PROJECT_VERSION` | 1.7.2 |
+| CLI version string | `SignaroCLI 5.5.1.7.2` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 107 tests across 14 classes in `SignaroTests` |
