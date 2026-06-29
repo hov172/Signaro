@@ -1,5 +1,120 @@
 # Release Notes
 
+## 5.5 Build 1.7.2 — 2026-06-29
+
+### Fixed
+
+- **Ad Hoc profile misclassification when device list is empty.** Provisioning profiles that carry a `ProvisionedDevices` key but list zero devices were incorrectly classified as App Store. `ProvisioningProfile.distributionType` now checks `hasProvisionedDevicesKey` (whether the key exists in the plist) rather than `!provisionedDevices.isEmpty`, so a zero-device Ad Hoc profile resolves to `.adHoc` correctly. File: `ProvisioningProfile.swift`.
+- **Empty-device Ad Hoc/Development warning in analysis card.** When an Ad Hoc or Development profile has no registered devices, the analysis card now shows a warning banner: "No devices registered — this profile has an empty device list. The re-signed IPA cannot be installed on any device." Previously the UDID coverage section was silently suppressed and `codesign --verify` still reported success, meaning Signaro could produce a "Re-signed successfully" IPA that would predictably fail at install time with no user-visible explanation. File: `IPAAnalysisCard.swift`.
+- **Debugger attachment blocked with Hardened Runtime + Manual signing.** With `ENABLE_HARDENED_RUNTIME = YES` and Manual code signing, Xcode does not auto-inject `com.apple.security.get-task-allow` for Debug builds. Added `Signaro-Debug.entitlements` containing `get-task-allow = true` and pointed the Debug build configuration at it. The Release configuration retains `Signaro.entitlements` (without `get-task-allow`) to pass notarization. Files: `Signaro/Signaro-Debug.entitlements` (new), `Signaro.xcodeproj/project.pbxproj`.
+- **`ProvisionedDevices` type-mismatch false positive.** A malformed profile where the `ProvisionedDevices` key holds a non-`[String]` value (e.g. raw data or a dict) previously set `hasProvisionedDevicesKey = true`, causing the profile to be silently classified as Ad Hoc with an empty device list. The parser now requires a successful `as? [String]` cast before setting the flag. File: `ProvisioningProfile.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.2`. `MARKETING_VERSION` `5.5`.
+- CLI version string `5.5.1.7.2`.
+- New file: `Signaro/Signaro-Debug.entitlements` (Debug-only entitlements; included in Signaro target, Debug configuration only).
+
+---
+
+## 5.5 Build 1.7.1 — 2026-06-28
+
+### New
+
+- **OTA manifest generation (GUI).** The analysis card for a successfully re-signed IPA now shows an **OTA Manifest…** button when the distribution type is Ad Hoc, Development, or Enterprise (not App Store). Enter the HTTPS URL where the re-signed `.ipa` will be hosted; Signaro generates `manifest.plist` (Apple's `itms-services://` plist format) and `install.html` (a tap-to-install web page) alongside the output file. The `itms-services://?action=download-manifest&url=…` install link is displayed in-app and can be copied. File: `IPAAnalysisCard.swift`; new service: `OTAManifestGenerator.swift`.
+- **CLI `--ota-url` flag for `ios resign`.** `SignaroCLI ios resign <ipa> --ota-url <https://…/app.ipa>` generates `manifest.plist` and `install.html` alongside the output IPA and prints the `itms-services://` install link to stdout. Requires HTTPS; limited to a single input IPA per invocation. File: `CLICommandRunner.swift`.
+
+### Fixed
+
+- **IPA routing notification race eliminated.** Opening `.ipa` files via File ▸ Open… (⌘O) or drag-and-drop previously posted `signaroSwitchToIOSTab` and `signaroOpenIPAURLs` as two back-to-back notifications. The tab switch is asynchronous; `IPAResignView` was not yet subscribed when the second notification fired, silently dropping files. `signaroSwitchToIOSTab` is now removed entirely. Pending IPA URLs are stored in `@State private var pendingIPAURLs: [URL]` above the TabView in `SignaroApp`, delivered to `IPAResignView` via `@Binding`, and consumed on `.onAppear` and `.onChange(of:)` — no subscription timing window. Files: `SignaroApp.swift`, `IPAResignView.swift`, `MainContentView.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.1`. `MARKETING_VERSION` `5.5`.
+- CLI version string `5.5.1.7.1`.
+- New file: `Signaro/Services/OTAManifestGenerator.swift` (shared Foundation-only service; included in both Signaro and SignaroCLI targets).
+
+---
+
+## 5.5 Build 1.7.0 — 2026-06-27
+
+iOS Re-sign UX and safety pass. All changes are to the **iOS Re-sign** tab and underlying service layer.
+
+### New
+
+- **Distribution type selector.** Development / Ad Hoc / Enterprise segmented picker above the queue. Filters profile matching to the chosen type; Auto (default) picks the best available. Files: `IPAResignView.swift`, `IPAResignService.swift`, `ProvisioningProfileStore.swift`.
+- **Apple Distribution identities in picker.** Both `Apple Development` and `Apple Distribution` certificates now appear in the signing identity picker, covering Ad Hoc workflows that use a Distribution cert. File: `IPAResignView.swift`.
+- **Per-nested-bundle profile status rows with drag-drop override.** App extensions and embedded Watch apps each show their own matched-profile status row in the analysis card. Drop a `.mobileprovision` file onto any row to override the profile for that bundle independently. Files: `IPAAnalysisCard.swift`, `IPAResignView.swift`.
+- **Post-resign codesign verification.** After each re-sign, `codesign --verify --deep --strict` is run and the result appears in the analysis card as a green or red shield badge. Files: `IPAResignService.swift`, `IPAAnalysisCard.swift`.
+- **Entitlement diff with delta values.** The entitlement diff view (changed/dropped/added keys) now shows the actual value change as a secondary italic line under each changed key (e.g., `false → true`, `removed com.example.group`). File: `IPAAnalysisCard.swift`.
+- **Wildcard profile warning.** When a wildcard provisioning profile is auto-selected, a callout warns that capabilities requiring an explicit App ID — Push Notifications, Associated Domains, PassKit, HealthKit — may not be active at runtime. Files: `IPAResignService.swift`, `IPAAnalysisCard.swift`.
+- **Expired profile surface.** The "no profile" guide now reports how many matching profiles were found but are expired, with a prompt to re-download fresh profiles via Xcode → Settings → Accounts → Download Manual Profiles. Files: `IPAResignService.swift`, `IPAAnalysisCard.swift`.
+- **App Store profile detection.** The "no profile" guide now explains specifically when App Store profiles are installed (but cannot be used for local re-signing) and directs users to install a Development or Ad Hoc profile instead. Files: `IPAResignService.swift`, `ProvisioningProfileStore.swift`, `IPAAnalysisCard.swift`.
+- **Ad Hoc UDID coverage check.** When an Ad Hoc profile is selected, a text field in the analysis card accepts one or more device UDIDs and highlights which are and are not covered by the profile's provisioned device list. File: `IPAAnalysisCard.swift`.
+- **Entitlement write verification.** After each re-sign, Signaro reads back the entitlements embedded in the signed binary and flags any declared in the profile that did not survive the codesign step. Files: `IPAResignService.swift`, `IPAAnalysisCard.swift`.
+- **Refresh Profiles button.** A "Refresh Profiles" button in the signing card forces a re-scan of `~/Library/…/Provisioning Profiles` and re-runs analysis on all queued IPAs — no app restart required. File: `IPAResignView.swift`.
+- **Per-IPA resign progress indicator.** During a batch resign, the card of the IPA actively being re-signed shows a spinner, making it clear which file is in progress. Files: `IPAResignView.swift`, `IPAAnalysisCard.swift`.
+- **Cert picker expiry warnings.** Signing identities that are expired or expiring within 14 days are labelled with `⚠ EXPIRED` or `⚠ expires soon` directly inside the picker. File: `IPAResignView.swift`.
+- **Parallel analysis.** `reanalyzeAll()` now runs analysis for all queued IPAs concurrently via `withTaskGroup`, reducing wait time proportionally to queue length. File: `IPAResignView.swift`.
+- **Batch resign summary.** After completing (or cancelling) a batch resign, a summary row above the cards reports the total Valid / Degraded / Failed counts. File: `IPAResignView.swift`.
+- **Cancel button during batch resign.** During an active batch, the Clear button is replaced by a Cancel button that stops the batch cleanly after the current IPA finishes signing. File: `IPAResignView.swift`.
+- **Multi-IPA profile hint shows aggregate.** When multiple IPAs are queued, the signing card header shows "N of M profiles resolved" (with a warning when any are missing) rather than only the first IPA's profile and identity. File: `IPAResignView.swift`.
+- **`get-task-allow` Degraded explanation.** When the only reason for "Predicted Degraded" is `get-task-allow` changing `false → true` (re-signing a distribution build with a Development profile), a contextual callout in the analysis card explains this is expected and the app will install and run normally. File: `IPAAnalysisCard.swift`.
+- **Expansion-aware header hint.** When a single analysis card is expanded, the global signing header shows that card's resolved profile + identity. Two or more expanded cards → aggregate of just those cards. Collapsing all cards returns to queue-wide aggregate. Files: `IPAResignView.swift`, `IPAAnalysisCard.swift`.
+- **UDID coverage checker for Development profiles.** The Ad Hoc UDID coverage text field is now also shown for Development profiles, which also carry a provisioned device list. File: `IPAAnalysisCard.swift`.
+- **FairPlay encrypted binary detection.** `analyze()` now runs `otool -l` on the main binary before reading entitlements. If `LC_ENCRYPTION_INFO`/`LC_ENCRYPTION_INFO_64` shows `cryptid != 0`, analysis is blocked immediately with an actionable message: "FairPlay-encrypted binary — use a Development or TestFlight build." File: `IPAResignService.swift`.
+- **Apple TSA timestamp.** Provisioning-bundle codesign calls now use Apple's RFC 3161 timestamp server (`--timestamp`). Signed apps remain installable after the signing cert expires. Falls back to `--timestamp=none` with a degraded note if the TSA is unreachable offline. File: `IPAResignService.swift`.
+- **Profile discovery cached.** `IPAResignViewModel` caches discovered profiles (`cachedProfiles`) populated by Refresh Profiles and passed to all service calls. Eliminates N×2 redundant filesystem scans per batch. Files: `IPAResignView.swift`, `IPAResignService.swift`.
+- **Cached resolved profile.** `IPAAnalysis.resolvedProfile` stores the matched `ProvisioningProfile`. `resign()` reuses it directly, ensuring the resign uses the same profile previewed in the parity check and skipping a redundant re-match. Files: `IPAResignService.swift`.
+- **Sub-bundle signing progress.** During resign, the status text updates per-target: "Signing MyExtension.appex…". Files: `IPAResignService.swift`, `IPAResignView.swift`, `IPAAnalysisCard.swift`.
+- **Output collision handling.** If the resigned `.ipa` path already exists, a numeric suffix (`-2`, `-3`, …) is appended instead of silently overwriting. File: `IPAResignService.swift`.
+- **Work dir in Finder on failure.** Failed resign results carry a `workDirURL`; the analysis card shows a "Show work dir in Finder" button for direct access to the retained working directory. Files: `IPAResignService.swift`, `IPAAnalysisCard.swift`.
+- **Codesign retry.** `runCodesign` retries once with a 500 ms backoff on transient failures (`amfid` timeout, security-framework contention). Retry outcome logged in `BundleReport` notes. File: `IPAResignService.swift`.
+- **CLI `ios analyze` / `ios resign` updated.** Both commands now accept `--distribution development|adhoc|enterprise` to constrain profile + cert selection (Apple Development for development; Apple Distribution for ad hoc/enterprise). `ios analyze` output now includes the distribution type alongside the profile name. `ios resign` pre-analyzes each IPA before resigning (reuses cached result to skip redundant unzip), uses collision-safe output naming (`-2`/`-3` suffix), and prints `→ target.appex` per bundle signed. File: `CLICommandRunner.swift`.
+
+### Fixed
+
+- **"Publishing changes from within view updates" runtime warnings eliminated.** Migrated `IPAResignViewModel` from `ObservableObject` + `@Published` to the `@Observable` macro (macOS 14+). Closure properties use `@ObservationIgnored` to prevent spurious re-renders. File: `IPAResignView.swift`.
+- **Team ID unreadable downgraded from blocked to degraded.** When the original team ID cannot be read from the embedded profile, the outcome is now `degraded` (re-sign proceeds with a warning) rather than `blocked`, matching the behavior for other non-fatal uncertainty cases. File: `TeamConsistency.swift`.
+- **False-positive parity deltas on codesign-injected keys.** `application-identifier` and `com.apple.developer.team-identifier` are always rewritten by codesign from the profile; comparing them against the original produced noisy false deltas. Both keys are now excluded from `EntitlementParityChecker.diff()`. File: `EntitlementParityChecker.swift`.
+- **TestFlight IPAs blocked by `beta-reports-active`.** `beta-reports-active` added to `cosmeticAllowList`; TestFlight IPAs no longer receive a false blocked verdict for this key. File: `EntitlementParityChecker.swift`.
+- **Production apps blocked by `com.apple.developer.default-data-protection`.** Added to `cosmeticAllowList`; dropping the data protection class entitlement only affects the default class for newly created files — it does not affect installability. File: `EntitlementParityChecker.swift`.
+- **Wrong cert type auto-selected for Ad Hoc / Enterprise.** `IdentityResolver` now prefers `Apple Distribution` certs when the profile's distribution type is Ad Hoc or Enterprise (was always preferring `Apple Development`, causing "Predicted Valid" that flipped to failure at resign time). File: `IdentityResolver.swift`.
+- **Double unzip per resign.** `resign()` now accepts a `precomputedAnalysis` parameter and skips the internal `analyze()` call when the ViewModel's cached analysis is passed in. File: `IPAResignService.swift`.
+- **`expandedURLs` not cleared on card removal.** `remove(url:)` and `clearQueue()` now clear `expandedURLs` entries, preventing the header hint from going blank after a card is removed. File: `IPAResignView.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.0`. `MARKETING_VERSION` `5.5`.
+- CLI version string `5.5.1.7.0`.
+
+---
+
+## 5.0 Build 1.6.0 — 2026-06-26
+
+### New
+
+- **iOS App Re-signing (iOS Re-sign tab).** A dedicated **iOS Re-sign** tab lets you queue one or more `.ipa` files, auto-detect the correct provisioning profile and Apple Development certificate, preview the result of the re-sign operation before committing, and produce a re-signed `.ipa` ready for side-loading or TestFlight upload. Each queued file shows a collapsible analysis card that reports the matched profile, matched certificate, predicted outcome (Valid / Degraded / Blocked), and the concrete reason for any block — including cross-team conflicts, missing profiles, unauthorized certificates, and entitlement parity violations. Files: `IPAResignView.swift`, `IPAAnalysisCard.swift`, `IPAResignService.swift`, `IPAResignViewModel.swift`.
+
+- **iOS Re-sign Analysis & Auto-Resolution.** On drop or file-pick, Signaro immediately runs a dry-run `analyze()` pass on each `.ipa`: unzips the archive in a temporary directory, reads the embedded provisioning profile and original entitlements, scans both `~/Library/MobileDevice/Provisioning Profiles` and `~/Library/Developer/Xcode/UserData/Provisioning Profiles` for a matching iOS profile (by bundle ID, platform, expiry, and team), resolves an authorized Apple Development certificate from the keychain, validates entitlement parity at the value level (deny-by-default), checks same-team membership for every provisioning bundle including App Extensions and Watch apps, and presents a `predictedStatus` card — all without writing any signed output. Files: `IPAResignService.swift`, `ProvisioningProfileStore.swift`, `IdentityResolver.swift`, `IPABundleClassifier.swift`, `EntitlementBuilder.swift`, `EntitlementParityChecker.swift`, `TeamConsistency.swift`.
+
+- **iOS Re-sign expiry warnings.** The collapsed analysis card row shows an amber ⚠️ badge when either the matched profile or the matched certificate expires within 14 days, and a red 🛑 badge when either has already expired. The expanded card shows exact expiry dates with the same color coding. CLI `ios analyze` also surfaces expiry in its output. Files: `IPAAnalysisCard.swift`, `IPAResignService.swift`, `CLICommandRunner.swift`.
+
+- **Queue management for iOS Re-signing.** Each queued `.ipa` card has an ✕ remove button (hidden during an active re-sign run). A **Clear** button beside the Re-sign button clears all cards and resets in-progress state. Duplicate URLs are silently deduplicated on drop or file-pick. Files: `IPAResignView.swift`, `IPAResignViewModel.swift`.
+
+- **File picker for iOS Re-signing.** A **Choose…** link in the drop zone opens an `NSOpenPanel` filtered to `.ipa` files, as an alternative to drag-and-drop. Files: `IPAResignView.swift`.
+
+- **Unified File ▸ Open… (⌘O) with auto-tab-switch.** A single **Open…** menu item accepts `.ipa`, `.app`, `.dmg`, `.pkg`, and `.mobileconfig` files. Files are automatically routed to the correct tab: `.ipa` files switch to the iOS Re-sign tab and are enqueued; all other supported types switch to the macOS tab and are added to the file list. Selecting a mixed batch switches to the tab for the first file type found. Files: `SignaroApp.swift`, `IPAResignView.swift`, `MainContentView.swift`.
+
+- **`ios analyze` and `ios resign` CLI commands.** `SignaroCLI ios analyze <file.ipa>…` runs the same dry-run analysis as the GUI, printing the matched profile, matched certificate, expiry status, predicted outcome, and resolution guidance for any block. `SignaroCLI ios resign <file.ipa>…` re-signs and writes the output alongside the original (or to `--output <path>`). Both commands support `--identity-name` and `--identity-sha1` to pin a specific certificate instead of auto-resolving. Files: `CLICommandRunner.swift`, `CLIParser.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.6.0`. `MARKETING_VERSION` `5.0`.
+- CLI version string `5.0.1.6.0`.
+
+---
+
 ## 5.0 Build 1.5.5 — 2026-06-08
 
 ### Changed
