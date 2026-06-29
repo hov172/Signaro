@@ -22,6 +22,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
   - [CLI Commands](#commands)
   - [End-to-End Example (Profile-Based)](#end-to-end-example-profile-based)
 - [Notarization Credential Modes](#notarization-credential-modes)
+- [In-App Help](#in-app-help)
 - [System Requirements](#system-requirements)
 - [Troubleshooting](#troubleshooting)
 - [Architecture Overview](#architecture-overview)
@@ -679,6 +680,45 @@ Store credentials once: `xcrun notarytool store-credentials MyProfile --apple-id
 
 **App Store Connect API Key (`.p8`)**
 Create a key in App Store Connect under Users and Access → Integrations → App Store Connect API. Download the `.p8` file and provide the Key ID and Issuer ID. Suitable for CI/CD agents, headless build servers, and restricted accounts where an Apple ID should not be stored.
+
+---
+
+## In-App Help
+
+Open the Help sheet at any time from the **Help** menu or the **?** button in the toolbar. It covers every major feature with enough detail to get started without leaving the app.
+
+**macOS Code Signing & Notarization**
+- Smart Certificate Selection — how Signaro filters and recommends certificates
+- Intelligent Recommendations — per-file certificate suggestions based on type
+- File Management & Smart Analysis — drag-drop, status badges, expand-for-detail
+- Code Signing Operations — sign, unsign, in-place vs. copy behavior
+- Apple Notarization — setup guide, credential modes, stapling
+- Signature Verification — what Valid / Invalid / Unsigned mean and how to fix each
+- Keychain Integration — discovery, access permissions, trust indicators
+- Certificate Types — Developer ID, Apple Development, Apple Distribution
+- Security Best Practices — cert storage, access controls
+- Distribution Workflows — App Store vs. outside-store, DMG vs. PKG
+- Notarization Auth Methods — when to use Apple ID, Keychain Profile, or ASC API Key
+- Troubleshooting & Advanced Diagnostics — `spctl`, `codesign`, `xattr` command reference
+
+**Command-Line Interface (signarocli)**
+- Overview & installation — PATH setup, `--json` flag for CI output
+- Identities & Credentials — `identities list`, `credentials test`
+- Analyze & Validate — signature status, pre-submission readiness, `--mode quick`
+- Sign, Unsign & Staple — per-type identity flags, UUID-based deferred staple
+- Notarize — `submit`, `wait`, `log`; all three auth modes documented
+- DMG, Distribute & Folder Sign — end-to-end workflows, custom DMG layout flags
+- History & Xcode Integration — `history list`, `xcode-phase` build script generation
+
+**iOS Re-signing**
+- Overview — what the iOS Re-sign tab does and how it fits into the workflow
+- What You Need — provisioning profile, signing certificate, and IPA requirements
+- iOS Provisioning Profiles — where to download, which directories Signaro scans, refresh cycle
+- Understanding Outcomes — Valid / Degraded / Blocked explained with remediation steps
+- Safety Guards — cross-team block, capability parity, wildcard profile warning
+- OTA Manifest Generation — Ad Hoc & Enterprise over-the-air install via `manifest.plist` + `install.html`
+- Reading the Analysis Card — every field in the pre-flight card explained
+- iOS CLI — all `signarocli ios` subcommands with flags
 
 ---
 
