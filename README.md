@@ -1,21 +1,22 @@
-# Signaro: Advanced macOS Code Signing & Notarization Utility
+# Signaro: Advanced macOS Code Signing, Notarization & iOS Re-signing Utility
 
 <div align="center">
   <img src="docimages/Signaro_Main.png" alt="Signaro Main Interface" width="800">
 </div>
 
-Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
+Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.0 Build 1.5.5 (2026-06-08)**
+**Current version: 5.5 Build 1.7.1 (2026-06-28)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-50-build-155)
+- [What's New](#whats-new-in-version-55-build-171)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
   - [DMG Creation and Customization](#dmg-creation-and-customization)
   - [Distribution Workflows](#distribution-workflows)
+  - [iOS App Re-signing](#ios-app-re-signing)
   - [Certificate Management](#certificate-management)
 - [Command-Line Interface](#command-line-interface)
   - [CLI Commands](#commands)
@@ -28,23 +29,72 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.0 Build 1.5.5
+## What's New in Version 5.5 Build 1.7.1
 
-Build 1.5.5 is a UI hierarchy refinement: the accent color is now reserved for the primary action so it no longer competes with informational elements.
+### OTA manifest generation + IPA routing fix (Build 1.7.1)
 
-- **Changed: Recommendation banner uses severity-based semantic colors.** The certificate recommendation banner used the same solid accent blue as the primary "Sign, Notarize, Staple & Distribute" button, so the two competed and the banner read as if it were clickable. The banner now colors itself by severity — **red** (will fail), **amber** (fix before signing, including wrong-certificate-for-file-type mismatches), **green** (good to go), and neutral **gray** (optional next-step tips) — with muted fills so accent blue belongs to the action button alone. File: `CertificateViews.swift`.
-- **Changed: Validation Mode segmented control uses a muted selected tint.** The selected "Detailed (Recommended)" segment no longer fills with full-saturation accent blue, keeping the bold blue unique to the primary button. File: `ValidationModePickerView.swift`.
+- **OTA Manifest…** — After a successful re-sign, the analysis card exposes an **OTA Manifest…** button for Ad Hoc, Development, and Enterprise profiles (not App Store). Enter the HTTPS URL where the re-signed `.ipa` will be hosted; Signaro writes two files alongside it: `manifest.plist` (Apple's `itms-services://` plist format) and `install.html` (a tap-to-install web page). Users visiting `install.html` in Safari on their device can tap one link to install the app directly — no MDM enrollment required for Ad Hoc and Enterprise targets. Requires HTTPS; the OTA install link format is `itms-services://?action=download-manifest&url=<hosted-manifest-url>`.
+- **CLI `--ota-url`** — `SignaroCLI ios resign MyApp.ipa --ota-url https://…/MyApp.resigned.ipa` generates `manifest.plist` and `install.html` alongside the output IPA and prints the `itms-services://` install link to stdout. Requires a single input IPA (each IPA needs its own hosted URL). Requires HTTPS.
+- **IPA routing race eliminated** — File ▸ Open… (⌘O) and drag-and-drop now store pending `.ipa` URLs in `@State` above the TabView and deliver them to `IPAResignView` via `@Binding`. Previously, `signaroSwitchToIOSTab` + `signaroOpenIPAURLs` were posted in rapid succession; `IPAResignView` was not yet subscribed when the second notification fired and files were silently dropped. The binding pattern has no subscription timing window.
 
-### Carried over from Build 1.5.4
+---
 
-Build 1.5.4 is an archive-distribution fix on top of Build 1.5.3.
+## What's New in Version 5.5 Build 1.7.0
 
-- **Fixed: App archives are distributable again (Mac App Archive, not Generic Xcode Archive).** After Build 1.5.3 added the `Signaro → SignaroCLI` target dependency, archiving the app also built the `SignaroCLI` command-line tool and — because the tool target defaulted to `SKIP_INSTALL = NO` — installed it into the archive's `Products/usr/local/bin/`. That demoted the result from a **Mac App Archive** to a **Generic Xcode Archive**, so the Xcode Organizer offered only "Distribute Content" instead of the "Distribute App" (Developer ID export/notarize) flow. `SKIP_INSTALL = YES` is now set on all three `SignaroCLI` configurations (Debug, Release, Release-Embedded), so the standalone tool no longer lands in the archive; the CLI is still built and is still embedded and signed into `Signaro.app`. File: `Signaro.xcodeproj/project.pbxproj`.
+### iOS Re-sign enhancements (Build 1.7.0)
 
-### Carried over from Build 1.5.3
+A comprehensive UX and safety pass on the **iOS Re-sign** tab:
 
-- **Fixed: "In Progress" notarizations no longer reported as rejected.** When a submission was made with wait-for-completion and Apple returned an interim `status: In Progress`, the GUI submit path collapsed Apple's three states (`Accepted` / `In Progress` / `Invalid`) into a binary "Accepted or rejected" check — so a still-processing submission was incorrectly labeled "Apple rejected the submission." The submit path now performs a proper three-way check: `Accepted` succeeds and fetches the audit log, `In Progress` reports that Apple is still processing (explicitly *not* a rejection, with the request ID and a hint to re-check shortly), and only `Invalid`/`Rejected` reports a rejection. The check prefers the authoritative parsed JSON `status` field and, when falling back to raw output, anchors on `status:` rather than bare substring matches so appended log text can't trigger a false rejection. File: `NotarizationOperations.swift`.
-- **Fixed: Embedded-CLI archive failing with "SignaroCLI not found."** Archiving the *Signaro (Embedded CLI)* scheme could fail because the app target had no dependency on the `SignaroCLI` tool, so the CLI was not built into the products directory before the Release-Embedded phase that embeds and signs it into `Signaro.app/Contents/Helpers`. An explicit `Signaro → SignaroCLI` target dependency now guarantees the CLI builds first, and the embed phase skips code signing on unsigned/CI builds instead of failing. File: `Signaro.xcodeproj/project.pbxproj`.
+- **Distribution type selector** — Development / Ad Hoc / Enterprise segmented picker above the queue. Filters profile matching to the chosen type; Auto (default) picks the best available.
+- **Apple Distribution identities in picker** — both `Apple Development` and `Apple Distribution` certificates appear in the signing identity picker, covering Ad Hoc workflows that use a Distribution cert.
+- **Per-nested-bundle profile status rows with drag-drop override** — app extensions and embedded Watch apps each show their own matched-profile status row. Drop a `.mobileprovision` onto any row to override that bundle's profile independently.
+- **Post-resign codesign verification** — `codesign --verify --deep --strict` runs after each re-sign; result appears as a green or red shield badge in the analysis card.
+- **Entitlement diff with delta values** — changed/dropped/added keys now show the actual value change as a secondary italic line (e.g., `false → true`, `removed com.example.group`).
+- **Wildcard profile warning** — when a wildcard profile (`*`) is auto-selected, a callout warns that capabilities requiring an explicit App ID (Push Notifications, Associated Domains, PassKit, HealthKit) may not be active at runtime.
+- **Expired profile surface** — the "no profile" guide reports how many matching profiles are expired, with a prompt to re-download via Xcode.
+- **App Store profile detection** — the "no profile" guide explains when App Store profiles are installed but can't be used for local re-signing, and directs users to install a Development or Ad Hoc profile.
+- **Ad Hoc UDID coverage check** — paste device UDIDs into the analysis card to see which are covered by the Ad Hoc profile's provisioned device list.
+- **Entitlement write verification** — after resign, reads back the embedded entitlements and flags any that didn't survive the codesign step.
+- **Refresh Profiles button** — forces a re-scan of both provisioning-profile directories and re-runs analysis on all queued IPAs without restarting the app.
+- **Per-IPA resign progress indicator** — the card of the IPA actively being re-signed shows a spinner during a batch run.
+- **Cert picker expiry warnings** — identities that are expired or expiring within 14 days are labelled `⚠ EXPIRED` / `⚠ expires soon` directly in the picker.
+- **Parallel analysis** — `reanalyzeAll()` now runs all queued IPAs concurrently via `withTaskGroup`.
+- **Batch resign summary row** — after a batch (or cancellation), a summary bar shows total Valid / Degraded / Failed counts.
+- **Cancel button during batch resign** — replaces Clear during an active batch; stops cleanly after the current IPA finishes.
+- **Multi-IPA profile hint shows aggregate** — signing card header shows "N of M profiles resolved" (with a warning when any are missing) instead of only the first IPA's profile.
+- **`get-task-allow` Degraded explanation** — when Predicted Degraded is solely because `get-task-allow` changed `false → true` (distribution → development re-sign), a contextual callout explains this is expected and the app will install and run normally.
+- **`@Observable` migration** — `IPAResignViewModel` migrated from `ObservableObject`+`@Published` to the `@Observable` macro, eliminating "Publishing changes from within view updates" runtime warnings.
+- **Team ID unreadable → degraded not blocked** — when the original team ID can't be read, the outcome is `degraded` (re-sign proceeds with a warning) rather than `blocked`.
+- **Expansion-aware header hint** — when a card is expanded, the global signing header shows that card's specific resolved profile + identity. Two or more expanded cards → aggregate of just those cards.
+- **UDID coverage checker for Development profiles** — the device UDID checker (previously Ad Hoc only) now also appears for Development profiles, which also have a provisioned device list.
+- **Codesign-injected keys excluded from parity diff** — `application-identifier` and `com.apple.developer.team-identifier` are always rewritten by codesign from the profile; comparing them was false-positive noise. Skipped.
+- **Cosmetic allow-list expanded** — `beta-reports-active` (TestFlight crash reporting) and `com.apple.developer.default-data-protection` (file protection class) added; TestFlight IPAs and common production apps that set a data protection class are no longer blocked.
+- **Double unzip eliminated** — `resign()` reuses the pre-computed `IPAAnalysis` from the analysis card instead of unzipping the IPA a second time; faster batch resigns and guaranteed analysis/sign consistency.
+- **Correct cert preference for Ad Hoc / Enterprise** — `IdentityResolver` now prefers `Apple Distribution` certs when the resolved profile is Ad Hoc or Enterprise (was always preferring `Apple Development`, causing false "Predicted Valid" with Distribution profiles).
+- **Output collision handling** — if the resigned `.ipa` path already exists, the output gets a numeric suffix (`-2`, `-3`) instead of silently overwriting the previous file.
+- **Sub-bundle signing progress** — during resign the status line updates per target: `Signing MyExtension.appex…`, `Signing MyApp.app…`.
+- **Work dir in Finder on failure** — a "Show work dir in Finder" button appears on failed resigns, linking directly to the retained working directory for diagnosis.
+- **Profile discovery cached** — `ProvisioningProfileStore.discover()` runs once per refresh cycle (not once per IPA per analyze/resign call); large profile stores no longer cause multi-second hangs on every queue change.
+- **Apple TSA timestamp for provisioning targets** — provisioning-bundle codesign calls now use Apple's RFC 3161 timestamp server so signed apps remain installable after the signing cert expires. Falls back to `--timestamp=none` (degraded) if the TSA is unreachable offline.
+- **FairPlay encrypted binary detection** — before reading entitlements, `otool -l` checks the main binary for `cryptid != 0`; FairPlay-encrypted App Store binaries produce an actionable blocked message instead of a cryptic "Analysis failed".
+- **Codesign retry** — transient `amfid`/security-framework failures are retried once with a 500 ms delay; logged in the bundle report notes.
+- **Cached resolved profile** — `IPAAnalysis` carries the matched `ProvisioningProfile` so `resign()` uses the same profile previewed in the parity check rather than re-matching at sign time.
+
+### Carried over from Build 1.6.0 — iOS `.ipa` re-signing
+
+Signaro re-signs iOS `.ipa` apps, not just macOS artifacts. Drop (or **File ▸ Open…**, ⌘O, or **Choose…**) an `.ipa` into the **iOS Re-sign** tab and Signaro:
+
+- **Auto-detects** the matching iOS provisioning profile (by bundle ID, iOS platform, non-expired) and the signing certificate that profile authorizes — no manual identity picking ("Auto (detect from profile)" is the default).
+- **Pre-flight analysis** previews the outcome *before* signing — predicted **Valid / Degraded / Blocked** with the resolved profile + identity, original team, entitlements, nested bundles, capability-parity result, and **profile + certificate expiry** (with an amber/red badge when expiring soon or expired).
+- **Re-signs inside-out** (frameworks → app extensions / Watch app → main app), signs by SHA-1 with `--timestamp=none`, embeds the fresh profile, and writes value-level expanded entitlements.
+- **Safety guards:** same-team enforcement (a cross-team re-sign ships as a new app and loses data — blocked), and deny-by-default value-level **capability parity** (any dropped/weakened entitlement blocks unless it is purely cosmetic).
+- **Batch queue** with per-app results, remove/clear, and Reveal-in-Finder for the output.
+- Reads profiles from both the legacy `~/Library/MobileDevice/Provisioning Profiles` and the current `~/Library/Developer/Xcode/UserData/Provisioning Profiles` (macOS 13+).
+- Available in the **CLI** too: `signaro ios analyze <ipa>` and `signaro ios resign <ipa>` (see [Commands](#commands)).
+
+The macOS signing/notarization pipeline is unchanged. See [iOS App Re-signing](#ios-app-re-signing).
+
+For Build 1.5.x and earlier release notes, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ---
 
@@ -117,6 +167,34 @@ Professional disk image creation with full Finder layout customization via a mou
 - **Distribute All with per-file DMG customization (v5.0+).** `BatchDistributionCoordinator` fans out through the full file list, routing each file to the appropriate workflow (`AppDistributionService` or `PkgDistributionService`) with its own `DMGFileSettings`. Checkpoint/resume mirrors the batch signing engine.
 - **Workflow checkpoint resume (v4.0+).** `WorkflowCheckpointStore` persists completed step IDs and execution context (credential snapshot, output paths) after every step. At next launch, `PendingWorkflowCheckpointsBanner` appears with a Resume button that restarts from the last completed step without re-executing already-finished work.
 
+### iOS App Re-signing
+
+<img src="docimages/Signaro_iOS_Resign.png" alt="iOS Re-sign tab" width="800">
+
+A dedicated **iOS Re-sign** tab (and matching CLI commands) re-signs iOS `.ipa` apps with a fresh provisioning profile. It is a separate path from the macOS pipeline — `.ipa` is always iOS — and reuses the same `LocalProcessRunner`/`codesign`/`security` operations layer.
+
+- **Add an `.ipa`** by drag-and-drop, the drop zone's **Choose…** button, or **File ▸ Open… (⌘O)**. ⌘O is type-aware: it routes `.ipa` to this tab and `.app`/`.dmg`/`.pkg`/`.mobileconfig` to the macOS tab, switching tabs automatically.
+- **Auto-detection.** `ProvisioningProfileStore` discovers installed profiles (scanning both `~/Library/MobileDevice/Provisioning Profiles` and the macOS 13+ `~/Library/Developer/Xcode/UserData/Provisioning Profiles`), matches the app's bundle ID to an iOS, non-expired profile (concrete preferred over wildcard, then newest), and `IdentityResolver` picks the keychain identity that profile authorizes. The identity picker defaults to **Auto (detect from profile)**; a specific Apple Development identity can be chosen to override.
+- **Pre-flight dry-run analysis.** Before any signing, each queued `.ipa` shows a predicted **Valid / Degraded / Blocked** badge with the resolved profile + identity, original team and authority, original entitlements, nested provisioning bundles (validated too), the capability-parity result, and **profile + certificate expiry** (amber within 14 days, red when expired — also flagged on the collapsed row). The engine runs the same read-only `analyze()` that `resign()` uses, so the preview never diverges from the result.
+- **Signing.** Inside-out order (deepest frameworks/dylibs first → app extensions / Watch app → main app last); frameworks/dylibs are code-only (no profile or entitlements); each provisioning bundle gets a fresh `embedded.mobileprovision` and value-level, wildcard-expanded entitlements; provisioning-bundle targets are signed using Apple's RFC 3161 timestamp server (apps remain installable after cert expiry; falls back to `--timestamp=none` offline); xattrs stripped first; Payload re-zipped; final `codesign --verify --deep --strict`.
+- **Safety guards.** **Same-team enforcement** — a cross-team re-sign installs as a new app on device (data loss), so it is blocked (fail-closed if the original team can't be read). **Deny-by-default value-level capability parity** — any removed or weakened entitlement blocks the re-sign unless its key is on a deliberately narrow cosmetic allow-list (`get-task-allow`, `beta-reports-active`, `com.apple.developer.default-data-protection`, codesign-injected keys); the original entitlements are read fail-closed so a parity check can never be silently skipped. **FairPlay-encrypted binaries** are detected early (via `otool -l`) and blocked with an actionable message.
+- **Distribution type selector.** A Development / Ad Hoc / Enterprise segmented picker above the queue filters profile matching to the chosen type. Auto (default) picks the best available match.
+- **Per-nested-bundle status + drag-drop override.** App extensions and Watch apps each show their own matched-profile row in the analysis card. Drop a `.mobileprovision` onto any row to override that bundle's profile independently.
+- **Post-resign codesign verification.** After each re-sign, `codesign --verify --deep --strict` is run and the result appears as a green ✓ or red ✗ shield badge.
+- **Entitlement diff with delta values.** The entitlement diff shows changed/dropped/added keys with the actual value change as a secondary italic line (e.g., `false → true`).
+- **Wildcard profile warning.** When a wildcard `*` profile is auto-selected, a callout warns that Push Notifications, Associated Domains, PassKit, and HealthKit may not be active at runtime.
+- **Expired profile surface + App Store profile detection.** The "no profile" guide reports expired candidate counts and explains when App Store profiles are installed but can't be used for local re-signing.
+- **UDID coverage check.** Paste device UDIDs in the card to see which are covered by the profile's provisioned device list. Shown for both Ad Hoc and Development profiles.
+- **Entitlement write verification.** After resign, Signaro reads back the embedded entitlements and flags any that didn't survive the codesign step.
+- **Refresh Profiles button.** Forces a re-scan of provisioning-profile directories and re-runs analysis on all queued IPAs without restarting.
+- **Per-IPA resign progress spinner.** The card of the IPA actively being re-signed shows a spinner during a batch.
+- **Cert picker expiry warnings.** Expired or soon-expiring identities are labelled `⚠ EXPIRED` / `⚠ expires soon` in the picker.
+- **Batch resign summary + Cancel button.** After a batch, a summary bar shows Valid / Degraded / Failed counts. During a batch, a Cancel button (replacing Clear) stops the run cleanly after the current IPA.
+- **OTA manifest generation.** After a successful re-sign, an **OTA Manifest…** button appears on the analysis card for Ad Hoc, Development, and Enterprise profiles. Enter the HTTPS URL where the re-signed `.ipa` will be hosted. Signaro generates `manifest.plist` (Apple OTA format) and `install.html` (a tap-to-install page with an `itms-services://` deep link) alongside the output file. The install link is `itms-services://?action=download-manifest&url=<hosted-manifest-url>`. Host both files on any HTTPS server; users tap the link in Safari on their iOS device to install. Also available via `SignaroCLI ios resign … --ota-url <https://…/app.ipa>`.
+- **Batch & results.** Queue multiple `.ipa`s (concurrent analysis, sequential re-sign, failure-isolated); per-app result badges; remove a single item (✕) or **Clear** the queue; **Reveal** the re-signed `.ipa` in Finder. Output is written as `<name>.resigned.ipa` next to the input (suffix `-2`, `-3`, … if a previous resigned file already exists). On failure, a **Show work dir in Finder** button links to the retained working directory for diagnosis.
+
+> Re-signing requires a non-sandboxed build (it spawns `codesign`/`security` and reads the profiles directory and keychain). A `codesign --verify`-clean signature is correctly signed. Installability on a device depends on distribution type: **Ad Hoc** and **Development** profiles contain a provisioned-device list (UDIDs must be registered in the Apple Developer portal and baked into the profile); **Enterprise** profiles allow installation on any device in the organization without a UDID list; **App Store** profiles are for local signing only and require distributing via App Store Connect.
+
 ### Certificate Management
 
 - **Workflow-aware auto-select (v4.7+).** Distribution dialog openings trigger `bestIdentity(for:)`, which filters identities by workflow type, excludes expired certificates (but not expiring-imminently ones), and prefers the identity last used for that specific workflow.
@@ -164,27 +242,34 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.0.1.5.5)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.1)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
 
 COMMANDS:
-  identities list      List signing identities with optional --show-all and --json.
-  analyze <paths>     Report signature and notarization status. Use --smart for advice.
-  validate <paths>    Pre-submission readiness check. Use --mode quick for CI.
-  sign <paths>        Sign files in place. Use --identity-sha1/--identity-name for homogeneous selections. For mixed .app/.pkg batches use --app-identity-* and --pkg-identity-* to supply the correct Developer ID Application and Developer ID Installer certificates separately.
-  unsign <paths>      Remove existing code signatures.
-  staple <paths>      Attach notarization tickets to files.
-  staple --uuid <id>  Poll for a known UUID, then staple the given file when Accepted.
-  notarize submit     Submit a file to Apple's notarization service.
-  notarize wait       Poll for a notarization verdict.
-  notarize log        Fetch the notarization processing log.
-  dmg create          Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
-  distribute app      End-to-end workflow for homogeneous .app selections.
-  distribute pkg      End-to-end workflow for homogeneous .pkg/.mobileconfig selections.
-  credentials test    Verify notarization credentials without submitting.
-  xcode-phase <proj>  Generate a Run Script Build Phase for an Xcode project.
+  identities list      List signing identities. Includes expiry status fields (--json) and expiry warnings (text). Use --show-all to include untrusted identities.
+  analyze <paths>      Report signature and notarization status. Use --smart for advice.
+  validate <paths>     Pre-submission readiness check. Use --mode quick for CI.
+  sign <paths>         Sign one or more files. For mixed .app/.pkg batches use --app-identity-* and --pkg-identity-*.
+  unsign <paths>       Remove existing code signatures.
+  staple <paths>       Attach notarization tickets to files.
+  staple --uuid <id>   Poll for a known UUID, then staple the given file when Accepted.
+  notarize submit      Submit a file to Apple's notarization service.
+  notarize wait        Poll for a notarization verdict.
+  notarize log         Fetch the notarization processing log.
+  dmg create           Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
+  distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG.
+  distribute pkg       End-to-end workflow for .pkg/.mobileconfig: sign → notarize → staple.
+  folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name>.
+  ios analyze <ipa>    Dry-run an iOS .ipa re-sign: predict Valid/Degraded/Blocked, auto-detected profile + cert, and reasons. No changes made.
+                       --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
+  ios resign <ipa>     Re-sign an iOS .ipa with a fresh profile. Auto-detects profile + cert; --identity-name/-sha1 to override, --output <path> for a single .ipa.
+                       --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
+                       --ota-url <https://…/app.ipa>  Generate manifest.plist and install.html for OTA distribution.
+  history list         Browse local submission history. Use --limit N and --operation <type>.
+  credentials test     Verify notarization credentials without submitting.
+  xcode-phase <proj>   Generate a Run Script Build Phase for an Xcode project.
 
 EXAMPLES:
   # List all identities with expiration dates in JSON
@@ -202,6 +287,13 @@ EXAMPLES:
   SignaroCLI distribute app --app MyApp.app --identity-name "Developer ID" \
     --keychain-profile "MyProfile" --output-dir ~/Desktop
 
+  # Submit + wait using a stored notarytool profile
+  SignaroCLI notarize submit MyApp.app --keychain-profile "MyProfile" --wait
+
+  # Deferred staple flow using request UUID
+  SignaroCLI notarize wait <request-id> --keychain-profile "MyProfile"
+  SignaroCLI staple --uuid <request-id> MyApp.app --keychain-profile "MyProfile"
+
   # Sign a homogeneous .app selection
   SignaroCLI sign MyApp.app --identity-name "Developer ID Application: Acme" --clean-attributes
 
@@ -210,6 +302,11 @@ EXAMPLES:
     --app-identity-name "Developer ID Application: Acme" \
     --pkg-identity-name "Developer ID Installer: Acme" \
     --clean-attributes
+
+  # Preview an iOS .ipa re-sign, then re-sign and generate OTA distribution files
+  SignaroCLI ios analyze MyApp.ipa --distribution adhoc
+  SignaroCLI ios resign MyApp.ipa --output ~/Desktop/MyApp.resigned.ipa \
+    --ota-url https://example.com/apps/MyApp.resigned.ipa
 
 GLOBAL OPTIONS:
   --json              Emit single JSON object to stdout.
@@ -229,8 +326,8 @@ DMG CUSTOMIZATION OPTIONS:
   --text-size <points>     Label text size (default 12).
   --window-width <n>       Finder window width.
   --window-height <n>      Finder window height.
-  --icon-x <n>            X position of the source file icon in the DMG window.
-  --icon-y <n>            Y position of the source file icon in the DMG window.
+  --icon-x <n>             X position of the source file icon in the DMG window.
+  --icon-y <n>             Y position of the source file icon in the DMG window.
   --applications-alias     Include /Applications symlink in DMG (app workflows).
   --format <fmt>           Output format (compressed, highly-compressed, etc).
   --filesystem <fs>        Internal filesystem (APFS or HFS+).
@@ -262,6 +359,8 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 | `validate` | Pre-submission readiness check | `SignaroCLI validate MyApp.app --mode quick` |
 | `sign` | Sign one or more files (split-identity aware) | `SignaroCLI sign MyApp.app --identity-name "..."` |
 | `unsign` | Remove existing code signatures | `SignaroCLI unsign MyApp.app` |
+| `ios analyze` | Dry-run an iOS `.ipa` re-sign (predict + auto-detect) | `SignaroCLI ios analyze MyApp.ipa` |
+| `ios resign` | Re-sign an iOS `.ipa` with a fresh profile; optional `--ota-url` for OTA distribution files | `SignaroCLI ios resign MyApp.ipa --output My.resigned.ipa` |
 | `folder sign` | Sign all signable files in a directory | `SignaroCLI folder sign ./build --recursive` |
 | `notarize` | Submit, wait for, or log notarization | `SignaroCLI notarize submit MyApp.zip --wait` |
 | `staple` | Attach notarization ticket to files | `SignaroCLI staple MyApp.app` |
@@ -311,6 +410,49 @@ Remove the code signature from one or more files. This is useful when you need t
 ```bash
 SignaroCLI unsign MyApp.app
 SignaroCLI unsign MyApp.app MyFramework.framework --json
+```
+
+#### `ios analyze <ipa> [<ipa> ...]`
+
+Read-only dry run of an iOS `.ipa` re-sign. Auto-detects the matching provisioning profile and the certificate it authorizes, then predicts **Valid / Degraded / Blocked** with the resolved profile, distribution type, identity, original team, capability-parity result, and profile/cert expiry. Never modifies anything.
+
+Flags:
+- `--distribution development|adhoc|enterprise` — constrain profile matching to a specific distribution type; auto-selects the matching cert kind (Apple Development for development, Apple Distribution for ad hoc/enterprise)
+- `--identity-name` / `--identity-sha1` — override auto-detected certificate
+- `--json` — machine-readable output
+
+```bash
+SignaroCLI ios analyze MyApp.ipa
+SignaroCLI ios analyze MyApp.ipa --distribution adhoc
+SignaroCLI ios analyze MyApp.ipa --json
+```
+
+Sample output:
+```
+MyApp.ipa: VALID — profile 'MyApp AdHoc' (Ad Hoc), identity 'Apple Distribution: Jane (ABCDE12345)'
+  [bundle com.example.myapp, team ABCDE12345]
+  profile expires 2026-12-01, in 157d
+```
+
+#### `ios resign <ipa> [<ipa> ...]`
+
+Re-sign one or more iOS `.ipa`s with a fresh provisioning profile. Pre-analyzes each IPA first (reuses the result in the resign step to avoid a redundant unzip). Writes `<name>.resigned.ipa` next to each input; appends `-2`/`-3` if the output already exists rather than overwriting. Use `--output <path>` for a single `.ipa`. Prints `→ MyExtension.appex` per bundle signed; on failure prints the retained work-dir path for diagnosis. Honors the same guards as the GUI (inside-out signing, same-team enforcement, deny-by-default capability parity) and returns a non-zero exit code if any re-sign is blocked.
+
+Flags:
+- `--distribution development|adhoc|enterprise|appstore` — constrain profile + cert selection to a specific type
+- `--identity-name` / `--identity-sha1` — override auto-detected certificate
+- `--output <path>` — explicit output path (single `.ipa` only)
+- `--ota-url <https://…/app.ipa>` — HTTPS URL where the re-signed IPA will be hosted. Generates `manifest.plist` and `install.html` alongside the output IPA for over-the-air distribution. The `itms-services://` install link is printed to stdout. Single IPA only (each IPA needs its own hosted URL). Applicable to Ad Hoc, Development, and Enterprise profiles.
+- `--json` — machine-readable output
+
+```bash
+SignaroCLI ios resign MyApp.ipa
+SignaroCLI ios resign MyApp.ipa --distribution adhoc
+SignaroCLI ios resign MyApp.ipa --output ~/Desktop/MyApp.resigned.ipa
+SignaroCLI ios resign MyApp.ipa --identity-name "Apple Distribution: Jane (ABCDE12345)" --json
+SignaroCLI ios resign MyApp.ipa \
+  --output ~/Desktop/MyApp.resigned.ipa \
+  --ota-url https://example.com/apps/MyApp.resigned.ipa
 ```
 
 #### `staple <path> [<path> ...]`
@@ -546,6 +688,7 @@ Create a key in App Store Connect under Users and Access → Integrations → Ap
 - **Xcode Command Line Tools** (`xcode-select --install`). Required for `codesign`, `productsign`, `notarytool`, `stapler`, and `hdiutil`.
 - **Apple Developer Account** with a valid Developer ID Application and/or Developer ID Installer certificate. Code signing and notarization require a paid developer program membership.
 - **Automation permission for Finder** (macOS Security & Privacy). Requested automatically on first DMG creation with custom layout. Required for the Finder AppleScript `set position of item` calls that apply icon positions and window geometry to DMG volumes.
+- **For iOS `.ipa` re-signing:** a **non-sandboxed** build (Signaro spawns `codesign`/`security` and reads the keychain and provisioning-profiles directory), an **Apple Development** or **Apple Distribution** certificate + key in the keychain, and an **iOS provisioning profile** installed (via Xcode → Settings → Accounts → Download Manual Profiles, or the Apple Developer portal) that covers the app's bundle ID for the app's team. For **Ad Hoc** and **Development** profiles, the target device's UDID must be registered in the Apple Developer portal and included in the profile's provisioned-devices list. **Enterprise** profiles allow installation on any device in the organization — no UDID list required.
 
 ---
 
@@ -562,6 +705,33 @@ Open More (···) → Entitlement Inspector… and drop both the signed `.app` 
 
 **Mixed signing selections behave unexpectedly.**
 Signaro signs each file with the certificate class that matches its type (`.app`/`.dmg` → Developer ID Application; `.pkg`/`.mobileconfig` → Developer ID Installer). Distribution workflows require a homogeneous selection — if you mix `.app` and `.pkg` files and then press Distribute, the preflight alert will offer to open the Working Folder Manager, where you can organize the files and run separate distribution passes.
+
+**"No installed iOS profile found for com.example.BundleID."**
+The profile scanner checks both `~/Library/MobileDevice/Provisioning Profiles` (legacy) and `~/Library/Developer/Xcode/UserData/Provisioning Profiles` (macOS 13+). If you see this: open Xcode → Settings → Accounts, select your Apple ID, and click **Download Manual Profiles** to install the profile; or download it manually from the Apple Developer portal. The profile must cover the app's bundle ID, be for the iOS platform, and be within its expiry date.
+
+**"No signing identity authorized by profile [name]." or no identity auto-resolved.**
+The Apple Development certificate in your keychain is not in the profile's authorized-developer list. Either the profile was created against a different certificate, or the certificate is in a different keychain. Re-download the profile from the Apple Developer portal (it will include your current cert) or select a matching identity manually in the identity picker.
+
+**iOS re-sign blocked with "cross-team re-sign blocked".**
+The original `.ipa`'s embedded provisioning profile has a different Apple Developer team ID than the replacement profile. A cross-team re-sign replaces app identity and is blocked by design — it can cause data loss on device. Use a profile from the same Apple Developer team that originally signed the app.
+
+**Re-signed `.ipa` installs but immediately crashes or shows "untrusted developer".**
+The device UDID must be listed in the profile's provisioned devices. Register the device in the Apple Developer portal, regenerate the profile, and re-sign. Also confirm the bundle ID in the `.ipa`'s `Info.plist` matches the profile's `application-identifier` entitlement exactly (no wildcard mismatch).
+
+**iOS analysis card shows "Blocked" even though a profile is installed.**
+Check the profile's expiry date (visible on the analysis card) and confirm it covers the exact platform ("iOS", not "macOS"). Profiles downloaded for a different bundle ID, team, or platform are filtered out. Use `ios analyze` from the CLI to see which profiles were found and how they matched.
+
+**"Predicted Degraded" when re-signing with a Development profile.**
+This is expected. The original build was distribution-signed (`get-task-allow=false`); re-signing with a Development profile adds `get-task-allow=true` to allow debugger attachment. The app will install and run normally. If you want "Predicted Valid", re-sign with an Ad Hoc profile instead.
+
+**iOS analysis shows "FairPlay-encrypted" blocked message.**
+The IPA was downloaded directly from the App Store (via Configurator or iTunes). App Store binaries are encrypted with FairPlay DRM — Signaro cannot read their entitlements and re-signing is not possible. Use a Development build from Xcode or a TestFlight build instead.
+
+**Re-signed Enterprise app stops installing after the signing cert expires.**
+This should no longer happen with Signaro 5.5 Build 1.7.0+, which uses Apple's RFC 3161 timestamp server for all provisioning-target codesign calls. An embedded timestamp proves the signature was made while the cert was valid, keeping the app installable indefinitely. If you see the issue, confirm the re-sign was done with 1.7.0+ and check that the TSA (`timestamp.apple.com`) was reachable during the resign — an offline resign falls back to `--timestamp=none` and is flagged as degraded.
+
+**Signed build has no push notifications / associated domains / PassKit at runtime.**
+A wildcard provisioning profile (`iOS Team Provisioning Profile: *`) was used. Capabilities that require an explicit App ID are not covered by wildcard profiles. Download an explicit profile for this bundle ID from the Apple Developer portal (Xcode → Settings → Accounts → Download Manual Profiles).
 
 **Notarization returns "in progress" for longer than expected.**
 Apple's notarization service processing time varies. Signaro polls every 30 seconds for up to 30 attempts (15 minutes total). If the submission is still active after the timeout, the request ID is displayed so you can resume later with `SignaroCLI staple --uuid <id> <path> --keychain-profile MyProfile`.
@@ -589,6 +759,8 @@ CodeSigningOps  NotarizationOps          DMGCreationOps
 ProcessRunner   AppDistributionWorkflow  PkgDistributionWorkflow
 IdentityManager CertificateLifecycleMonitor  WorkflowCheckpointStore
 SubmissionLogger BatchSigningCoordinator  BatchDistributionCoordinator
+IPAResignService ProvisioningProfileStore IdentityResolver OTAManifestGenerator
+IPABundleClassifier EntitlementBuilder  EntitlementParityChecker  TeamConsistency
 ```
 
 | Feature | GUI Application | Command-Line Interface |
@@ -601,6 +773,9 @@ SubmissionLogger BatchSigningCoordinator  BatchDistributionCoordinator
 | **Working Folder Management** | ✅ | ✅ (`folder sign <dir>`) |
 | **Submission History Browser** | ✅ | ✅ (`history list`) |
 | **Expiry Notifications** | ✅ | ✅ (expiry fields in `identities list`) |
+| **iOS `.ipa` Re-signing** | ✅ (iOS Re-sign tab) | ✅ (`ios analyze` / `ios resign`) |
+| **iOS Re-sign Analysis & Auto-detect** | ✅ (pre-flight cards) | ✅ (`ios analyze`) |
+| **OTA Manifest Generation** | ✅ (OTA Manifest… button) | ✅ (`ios resign --ota-url`) |
 
 Key design constraints:
 - All operations execute through `ProcessRunner`, an actor-serialized wrapper around `Process` that prevents concurrent invocations of tools that do not support it (`codesign`, `productsign`, `notarytool`).
@@ -614,14 +789,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.0 Build 1.5.5 |
-| Build date | 2026-06-08 |
-| `MARKETING_VERSION` | 5.0 |
-| `CURRENT_PROJECT_VERSION` | 1.5.5 |
-| CLI version string | `SignaroCLI 5.0.1.5.5` |
+| Current version | 5.5 Build 1.7.1 |
+| Build date | 2026-06-28 |
+| `MARKETING_VERSION` | 5.5 |
+| `CURRENT_PROJECT_VERSION` | 1.7.1 |
+| CLI version string | `SignaroCLI 5.5.1.7.1` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 84 tests across 12 classes in `SignaroTests` |
+| Test suite | 107 tests across 14 classes in `SignaroTests` |
 
 ---
 
