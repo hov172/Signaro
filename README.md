@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.5 (2026-07-05)**
+**Current version: 5.5 Build 1.7.6 (2026-07-05)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-175)
+- [What's New](#whats-new-in-version-55-build-176)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,12 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.5
+## What's New in Version 5.5 Build 1.7.6
+
+### Orphaned-certificate detection (Build 1.7.6)
+
+- **"My certificate is in the keychain but Signaro doesn't list it" — now explained.** A signing certificate whose private key is missing can never appear in the certificate picker (macOS only enumerates cert+key *pairs*), while Keychain Access shows it plainly — the classic confusion after moving Macs, and the failure mode of Renew… when the issued certificate is downloaded on a different Mac than the one that generated the CSR. Signaro now scans for these orphans: an orange hint appears under the picker, and the stethoscope diagnostic lists each orphaned certificate with the fix (export a `.p12` from the originating Mac, or renew from here). Expired orphans are ignored — they're cleanup clutter, not blockers.
+- **Renewal keys are tracked to completion.** The diagnostic also lists Renew…-generated private keys still waiting for their certificate, so an in-flight renewal is visible and an abandoned one is identifiable (and safe to delete).
 
 ### Certificate lifecycle at a glance, and in-app renewal (Build 1.7.5)
 
@@ -274,7 +279,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.5
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.6
 SignaroCLI --help
 ```
 
@@ -282,7 +287,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.5)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.6)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -921,14 +926,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.5 |
+| Current version | 5.5 Build 1.7.6 |
 | Build date | 2026-07-05 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.5 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.5` |
+| `CURRENT_PROJECT_VERSION` | 1.7.6 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.6` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 190 tests across 25 classes in `SignaroTests` |
+| Test suite | 199 tests across 26 classes in `SignaroTests` |
 
 ---
 

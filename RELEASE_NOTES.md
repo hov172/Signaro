@@ -1,5 +1,19 @@
 # Release Notes
 
+## 5.5 Build 1.7.6 — 2026-07-05
+
+### New
+
+- **Orphaned-certificate detection.** A signing certificate whose private key is missing is invisible to every identity enumeration in the app (`kSecClassIdentity` only returns cert+key pairs) while Keychain Access shows it plainly — the classic multi-Mac case, and the failure mode of the Renew… flow when the issued `.cer` is opened on a different Mac than the one that generated the CSR. New `KeychainOrphanScanner` (app target): enumerates raw `kSecClassCertificate` entries (metadata only), filters to Apple signing-cert subject prefixes (intermediates/roots such as "Developer ID Certification Authority" excluded), and diffs DER SHA-1s against the identity list. Expired orphans are dropped — a key-less expired cert is cleanup clutter, not a signing blocker. UI: an orange one-line hint under the certificate picker when orphans exist, and a "Certificates Missing Their Private Key" section in the stethoscope diagnostic with export-`.p12`/renew guidance. Classification is pure and unit-tested (9 cases). Files: `KeychainOrphanScanner.swift`, `CertificateViews.swift`.
+- **Renewal keys tracked to completion.** The diagnostic's new "Renewal Keys Awaiting a Certificate" section lists Renew…-generated private keys whose public key matches no certificate in the keychain — an in-flight renewal is visible, an abandoned one is identifiable and safe to delete. The Open Keychain Access button now appears for orphan findings too. Files: `KeychainOrphanScanner.swift`, `CertificateViews.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.6`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.6`.
+- New files: `Signaro/Services/KeychainOrphanScanner.swift` (Signaro target only), `SignaroTests/KeychainOrphanScannerTests.swift`. Suite now 199 tests across 26 classes (all green).
+
+---
+
 ## 5.5 Build 1.7.5 — 2026-07-05
 
 ### New
