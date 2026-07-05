@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.6 (2026-07-05)**
+**Current version: 5.5 Build 1.7.7 (2026-07-05)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-176)
+- [What's New](#whats-new-in-version-55-build-177)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,13 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.6
+## What's New in Version 5.5 Build 1.7.7
+
+### iOS tab lifecycle parity, expired-profile hard stop (Build 1.7.7)
+
+- **The iOS Re-sign tab now tells the full certificate and profile story at the picker** — matching the macOS tab. The signing-identity row shows the urgency pill ("32 days"), the Renew… menu (CSR generation + portal deep link), and the consolidated *type · trust · exact expiry* line — and in **Auto mode** these describe the identity your queued IPAs actually resolved to, staying visible whether cards are collapsed or expanded.
+- **The detected `.mobileprovision` gets its own banner.** A severity-tinted row labeled with a `.mobileprovision` chip shows the resolved profile's name and "Expires *date* — N days" (matching the identity line's format), with **Regenerate in portal…** inline once it's inside the 90-day window — the same threshold as every other lifecycle indicator, replacing the old 14-day trigger. Redundant hint rows stand down when the banner is showing.
+- **Expired provisioning profiles are now a hard stop.** The auto-matcher always filtered them, but a drag-in `.mobileprovision` override (or a cached analysis) could carry an expired profile straight through to a successful-looking re-sign that failed at install. Analysis now predicts **Blocked** with the expiry date and full remediation (regenerate in portal → Xcode → Download Manual Profiles), nested-bundle overrides included, re-enforced at sign time — and the CLI's `ios analyze`/`ios resign` inherit it.
 
 ### Orphaned-certificate detection (Build 1.7.6)
 
@@ -279,7 +285,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.6
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.7
 SignaroCLI --help
 ```
 
@@ -287,7 +293,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.6)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.7)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -926,14 +932,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.6 |
+| Current version | 5.5 Build 1.7.7 |
 | Build date | 2026-07-05 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.6 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.6` |
+| `CURRENT_PROJECT_VERSION` | 1.7.7 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.7` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 199 tests across 26 classes in `SignaroTests` |
+| Test suite | 218 tests across 27 classes in `SignaroTests` |
 
 ---
 

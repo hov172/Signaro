@@ -1,5 +1,25 @@
 # Release Notes
 
+## 5.5 Build 1.7.7 — 2026-07-05
+
+### New
+
+- **iOS re-sign tab: certificate-lifecycle parity with the macOS tab.** The signing-identity row gains the urgency-only status pill, the consolidated *type · trust · exact expiry* metadata line, the Renew… menu (built-in CSR generation + portal deep link), and the orphaned-certificate hint — all via the shared components (`CertificateStatusPill`, `CertificateMetadata`, new shared `CertificateRenewal`), retiring the tab's old 14-day text tags for the selected identity in favor of the 90-day lifecycle model. Files: `IPAResignView.swift`, `CertificateViews.swift`.
+- **Auto mode describes the identity that will actually sign.** New `IPAResignViewModel.autoResolvedIdentity`: when every queued IPA resolves to the same identity, the picker row shows its pill/metadata/Renew… (explicit selection wins; mixed resolutions defer to per-card rows; computed from analyses directly so card expansion cannot hide it). Unit-tested (5 cases incl. the expansion regression). File: `IPAResignView.swift`.
+- **The detected `.mobileprovision` gets a picker-level banner.** New `autoResolvedProfileExpiry` (common profile across the queue, surfacing the earliest expiry) drives a severity-tinted banner: `.mobileprovision` capsule chip, profile name (full name on hover), "Expires *date* — N days" via new pure `CertificateMetadata.profileExpiryText`, and an inline "Regenerate in portal…" link inside the 90-day window. Redundant "Profile: …"/"Identity: …" hint rows stand down when the banner/metadata line carry the same fact. Files: `IPAResignView.swift`, `CertificateViews.swift`.
+- **Expired provisioning profiles are a hard stop.** The auto-matcher always filtered expired profiles, but a drag-in `.mobileprovision` override or cached analysis could carry one through to a re-sign that verified locally and died at install ("provisioning profile has expired") — the last member of the signs-cleanly-dies-later family. New pure `IPAResignService.expiredProfileBlockReason` (profile name + expiry date + full remediation in the message) enforced in `analyze()`'s resolution, `evaluateProvisioningBundle` (nested overrides), and `signTarget`; `SignaroCLI ios analyze`/`ios resign` inherit it. Files: `IPAResignService.swift`.
+
+### Changed
+
+- **Profile "Regenerate in portal…" trigger aligned to the 90-day model** (was a 14-day window that hid the link while the pill beside it warned). New pure `CertificateMetadata.profileRegenerationPrompt` maps the shared lifecycle thresholds. Files: `CertificateViews.swift`, `IPAAnalysisCard.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.7`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.7`.
+- Suite now 218 tests across 27 classes (all green). Strings catalog synced (adds diagnostic strings; removes the unused "Selected: %@ certificate" key).
+
+---
+
 ## 5.5 Build 1.7.6 — 2026-07-05
 
 ### New
