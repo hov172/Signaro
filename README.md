@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.2 (2026-06-29)**
+**Current version: 5.5 Build 1.7.3 (2026-07-05)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-172)
+- [What's New](#whats-new-in-version-55-build-173)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -27,6 +27,19 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 - [Troubleshooting](#troubleshooting)
 - [Architecture Overview](#architecture-overview)
 - [Version Information](#version-information)
+
+---
+
+## What's New in Version 5.5 Build 1.7.3
+
+### Connected devices, team registry, and revocation checks (Build 1.7.3)
+
+- **Check This Mac's Devices** — one click in the UDID coverage section fills the coverage field with the UDID of every device paired with this Mac via `devicectl` (iOS 17+, Xcode 15+), deduplicated and preserving hand-typed entries. Rows for known devices show the device name and connection state. Manual UDID pasting remains fully supported.
+- **Install on Device…** — after a successful re-sign of an Ad Hoc, Development, or Enterprise IPA, install the output directly onto a connected device. A successful on-device install is the ground-truth verification that a re-sign worked; blocked installs are explained up front (device not connected, UDID not in profile, Developer Mode off). CLI: `SignaroCLI ios install <ipa> --device <udid-or-name>` and `SignaroCLI devices list`.
+- **Team device registry (read-only App Store Connect)** — `SignaroCLI devices registered` lists the devices registered to your team using an ASC API key (App Manager/Admin role); `--udid` cross-checks specific UDIDs and tells you whether a profile is merely stale or the device was never registered. Device registration and profile regeneration are deliberately not implemented (quota-consuming, team-visible actions).
+- **Certificate revocation check** — `SignaroCLI identities list --check-revocation` verifies each certificate against Apple's OCSP responder. A revoked certificate signs cleanly but fails later at Gatekeeper/notarization; this catches it up front. Soft-fail: network trouble is never reported as a revocation.
+- **In-app Help** — new sections covering connected devices, on-device install, the team registry (including step-by-step ASC API key creation and the App Manager role caveat), and the revocation check.
+- **Fixed:** the auth-mode picker in the notarization/distribution credential dialogs no longer triggers SwiftUI's "Publishing changes from within view updates" runtime warning (re-entrant publish from the rebuilt picker's no-op selection write).
 
 ---
 
@@ -196,7 +209,8 @@ A dedicated **iOS Re-sign** tab (and matching CLI commands) re-signs iOS `.ipa` 
 - **Entitlement diff with delta values.** The entitlement diff shows changed/dropped/added keys with the actual value change as a secondary italic line (e.g., `false → true`).
 - **Wildcard profile warning.** When a wildcard `*` profile is auto-selected, a callout warns that Push Notifications, Associated Domains, PassKit, and HealthKit may not be active at runtime.
 - **Expired profile surface + App Store profile detection.** The "no profile" guide reports expired candidate counts and explains when App Store profiles are installed but can't be used for local re-signing.
-- **UDID coverage check.** Paste device UDIDs in the card to see which are covered by the profile's provisioned device list. Shown for both Ad Hoc and Development profiles.
+- **UDID coverage check.** Paste device UDIDs in the card to see which are covered by the profile's provisioned device list. Shown for both Ad Hoc and Development profiles. A **Check This Mac's Devices** button asks `devicectl` for every device paired with this Mac (iOS 17+) and fills their UDIDs into the coverage field automatically (deduplicated, preserving anything already typed); rows for known devices are annotated with the device name and connection state.
+- **Install on Device.** After a successful re-sign of an Ad Hoc, Development, or Enterprise IPA, an **Install on Device…** button lists the devices this Mac knows and installs the output IPA directly via `devicectl` — the ground-truth verification that a re-signed IPA actually works. Blocked installs are explained up front (device not connected, UDID not in the profile, Developer Mode off). Also available as `SignaroCLI ios install <ipa> --device <udid>`.
 - **Entitlement write verification.** After resign, Signaro reads back the embedded entitlements and flags any that didn't survive the codesign step.
 - **Refresh Profiles button.** Forces a re-scan of provisioning-profile directories and re-runs analysis on all queued IPAs without restarting.
 - **Per-IPA resign progress spinner.** The card of the IPA actively being re-signed shows a spinner during a batch.
@@ -254,13 +268,14 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.2)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.3)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
 
 COMMANDS:
   identities list      List signing identities. Includes expiry status fields (--json) and expiry warnings (text). Use --show-all to include untrusted identities.
+                       --check-revocation  Also verify each certificate against Apple's OCSP responder (network). A revoked cert signs fine but fails at Gatekeeper/notarization.
   analyze <paths>      Report signature and notarization status. Use --smart for advice.
   validate <paths>     Pre-submission readiness check. Use --mode quick for CI.
   sign <paths>         Sign one or more files. For mixed .app/.pkg batches use --app-identity-* and --pkg-identity-*.
@@ -279,6 +294,9 @@ COMMANDS:
   ios resign <ipa>     Re-sign an iOS .ipa with a fresh profile. Auto-detects profile + cert; --identity-name/-sha1 to override, --output <path> for a single .ipa.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
                        --ota-url <https://…/app.ipa>  Generate manifest.plist and install.html for OTA distribution.
+  ios install <ipa>    Install a (re-signed) .ipa or .app onto a device: --device <udid-or-name>. Uses devicectl (iOS 17+, Xcode 15+).
+  devices list         List devices known to this Mac via devicectl, with UDID, OS, connection state, and Developer Mode status.
+  devices registered   List devices registered to the team in App Store Connect (read-only ASC API; App Manager/Admin role). --udid <u1,u2> cross-checks specific UDIDs.
   history list         Browse local submission history. Use --limit N and --operation <type>.
   credentials test     Verify notarization credentials without submitting.
   xcode-phase <proj>   Generate a Run Script Build Phase for an Xcode project.
@@ -373,12 +391,15 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 | `unsign` | Remove existing code signatures | `SignaroCLI unsign MyApp.app` |
 | `ios analyze` | Dry-run an iOS `.ipa` re-sign (predict + auto-detect) | `SignaroCLI ios analyze MyApp.ipa` |
 | `ios resign` | Re-sign an iOS `.ipa` with a fresh profile; optional `--ota-url` for OTA distribution files | `SignaroCLI ios resign MyApp.ipa --output My.resigned.ipa` |
+| `ios install` | Install a (re-signed) `.ipa` or `.app` onto a connected device via `devicectl` | `SignaroCLI ios install My.resigned.ipa --device <udid>` |
+| `devices list` | List devices paired with this Mac (UDID, OS, connection state, Developer Mode) | `SignaroCLI devices list --json` |
+| `devices registered` | List the team's device registry from App Store Connect (read-only); `--udid` cross-checks specific UDIDs | `SignaroCLI devices registered --key-id K --issuer-id I --key-path k.p8` |
 | `folder sign` | Sign all signable files in a directory | `SignaroCLI folder sign ./build --recursive` |
 | `notarize` | Submit, wait for, or log notarization | `SignaroCLI notarize submit MyApp.zip --wait` |
 | `staple` | Attach notarization ticket to files | `SignaroCLI staple MyApp.app` |
 | `dmg create` | Create customized disk images | `SignaroCLI dmg create --source App.app --icon-size 96` |
 | `distribute` | Full E2E pipeline (Sign → Notarize → DMG) | `SignaroCLI distribute app --app MyApp.app` |
-| `identities list` | List Developer ID identities with expiry status | `SignaroCLI identities list --json` |
+| `identities list` | List Developer ID identities with expiry status; `--check-revocation` for OCSP verification | `SignaroCLI identities list --json` |
 | `credentials test` | Validate notarization credentials | `SignaroCLI credentials test --keychain-profile "..."` |
 | `history list` | Browse local submission history | `SignaroCLI history list --limit 20` |
 | `xcode-phase` | Generate Xcode Build Phase script | `SignaroCLI xcode-phase MyApp.xcodeproj` |
@@ -465,6 +486,44 @@ SignaroCLI ios resign MyApp.ipa --identity-name "Apple Distribution: Jane (ABCDE
 SignaroCLI ios resign MyApp.ipa \
   --output ~/Desktop/MyApp.resigned.ipa \
   --ota-url https://example.com/apps/MyApp.resigned.ipa
+```
+
+#### `ios install <ipa|app> --device <udid-or-name>`
+
+Install a (re-signed) `.ipa` or `.app` onto a device using `devicectl` (ships with Xcode 15+; lists iOS 17+ devices paired with this Mac). A successful on-device install is the definitive proof that a re-signed IPA's profile, certificate, and entitlements all line up — `codesign --verify` alone can't prove installability. The device may be given by UDID or by name. Exits `69` with devicectl's error when the device is unreachable or rejects the app.
+
+```bash
+SignaroCLI ios resign MyApp.ipa
+SignaroCLI ios install MyApp.resigned.ipa --device 00008120-000A1B2C3D4E5F60
+SignaroCLI ios install MyApp.resigned.ipa --device "Jane's iPhone" --json
+```
+
+#### `devices list`
+
+List every device known to this Mac through CoreDevice: name, model, OS version, UDID, connection state, and Developer Mode status. Useful before `ios install` and for checking UDIDs against an Ad Hoc profile without touching the portal. Devices appear here after being paired once via Xcode or Finder; `devicectl` only tracks iOS 17+ devices.
+
+```bash
+SignaroCLI devices list
+SignaroCLI devices list --json
+```
+
+Sample output:
+```
+Jane's iPhone (iPhone 15 Pro Max · iOS 26.5) — UDID 00008120-000A1B2C3D4E5F60 — connected
+```
+
+#### `devices registered --key-id <id> --issuer-id <id> --key-path <p8>`
+
+Read-only view of the team's device registry in App Store Connect, authenticated with the same API-key triple used for notarization. **Role caveat:** a notarization-only key (Developer role) gets a 403 here — the device registry requires **App Manager or Admin**. Signaro deliberately does not implement device registration or profile regeneration: registering a device consumes one slot of the non-refundable 100-device annual quota, and ASC profile "editing" is actually delete-and-recreate, which can break teammates and CI pipelines pinning that profile.
+
+`--udid <u1,u2>` cross-checks specific UDIDs against the registry and tells you which fix applies:
+- **Registered but not in the profile** → the profile predates the device; regenerate the profile in the developer portal.
+- **Not registered** → register the device first (consumes quota), then regenerate the profile.
+
+```bash
+SignaroCLI devices registered --key-id ABC123DEFG --issuer-id 12345678-abcd-... --key-path ~/keys/AuthKey.p8
+SignaroCLI devices registered --key-id ... --issuer-id ... --key-path ... \
+  --udid 00008120-000A1B2C3D4E5F60 --json
 ```
 
 #### `staple <path> [<path> ...]`
@@ -565,9 +624,17 @@ SignaroCLI dmg create --encrypt --password "secret123" --source App.app --output
 
 List all available Developer ID certificates. Includes human-readable expiry warnings and status pills. Use `--json` for structured metadata including SHA-1, Team ID, and serial numbers.
 
+`--check-revocation` additionally verifies each certificate against Apple's OCSP responder. This catches the nastiest signing failure: a **revoked** certificate has valid dates and signs cleanly with `codesign`, but the output is rejected later at Gatekeeper or notarization with an unrelated-looking error. The check is soft-fail — only an affirmative "revoked" answer from the trust engine is reported as revoked; network trouble is reported as "unconfirmed", never as a false alarm. It is a network operation, hence opt-in.
+
 ```bash
 SignaroCLI identities list
 SignaroCLI identities list --show-all --json
+SignaroCLI identities list --check-revocation
+```
+
+Sample `--check-revocation` output:
+```
+✅ Developer ID Application: Jane Doe (TEAMID1234) [C4F8…A794] [revocation: not revoked (OCSP confirmed)]
 ```
 
 #### `folder sign <dir>` (v5.0.1.4+)
@@ -840,11 +907,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.2 |
-| Build date | 2026-06-29 |
+| Current version | 5.5 Build 1.7.3 |
+| Build date | 2026-07-05 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.2 |
-| CLI version string | `SignaroCLI 5.5.1.7.2` |
+| `CURRENT_PROJECT_VERSION` | 1.7.3 |
+| CLI version string | `SignaroCLI 5.5.1.7.3` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 107 tests across 14 classes in `SignaroTests` |
