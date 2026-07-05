@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.3 (2026-07-05)**
+**Current version: 5.5 Build 1.7.4 (2026-07-05)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-173)
+- [What's New](#whats-new-in-version-55-build-174)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,14 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.3
+## What's New in Version 5.5 Build 1.7.4
+
+### Signing safety hardening and CLI validate fix (Build 1.7.4)
+
+- **Expired-certificate hard stop for iOS re-signing.** An expired signing certificate signs cleanly and passes local `codesign --verify`, but the resulting IPA fails to install on every device. Re-signing with one is now **Blocked** at analysis (with the expiry date and remediation in the message) and refused again at sign time. The check reads the certificate's expiry from the keychain *and* from the authoritative DER copy embedded in the provisioning profile — so a stale profile whose embedded certificate has expired is caught even when keychain metadata is missing. Expired identities remain visible in the picker with their ⚠ EXPIRED tag so the situation is explainable; "expires soon" remains advisory.
+- **Nested-bundle entitlement preservation (macOS signing).** Helpers, XPC services, and extensions inside a `.app` now get fail-closed entitlement handling: if their existing entitlements cannot be extracted, signing stops instead of silently stripping them, and after signing each nested bundle Signaro re-reads what was actually written and verifies every intended entitlement key survived.
+- **Per-bundle post-sign entitlement verification (iOS re-signing).** The intended-vs-written entitlement check now runs for every nested `.appex` and Watch bundle, not just the main app — dropped keys surface as a Degraded status instead of passing silently.
+- **Fixed: `SignaroCLI validate` hang.** `validate` (and the GUI's comprehensive validation, which shares the code path) could hang indefinitely due to a lost process-exit notification in a bespoke process runner; it also had a latent deadlock on outputs over 64 KB. Both are gone — the checker now uses the same hardened process runner as the rest of the app.
 
 ### Connected devices, team registry, and revocation checks (Build 1.7.3)
 
@@ -260,7 +267,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.0.1.5.5
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.4
 SignaroCLI --help
 ```
 
@@ -268,7 +275,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.3)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.4)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -907,14 +914,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.3 |
+| Current version | 5.5 Build 1.7.4 |
 | Build date | 2026-07-05 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.3 |
-| CLI version string | `SignaroCLI 5.5.1.7.3` |
+| `CURRENT_PROJECT_VERSION` | 1.7.4 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.4` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 107 tests across 14 classes in `SignaroTests` |
+| Test suite | 174 tests across 23 classes in `SignaroTests` |
 
 ---
 

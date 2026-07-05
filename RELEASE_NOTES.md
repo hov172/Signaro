@@ -1,5 +1,50 @@
 # Release Notes
 
+## 5.5 Build 1.7.4 — 2026-07-05
+
+### New
+
+- **Expired-certificate hard stop for iOS re-signing.** An expired signing certificate signs cleanly and passes local `codesign --verify`, but the resulting IPA fails to install on every device — a silent-until-runtime failure. Re-signing with one is now **Blocked** at analysis (predicted outcome, with the expiry date and remediation in the message), for nested `.appex`/Watch bundles in the per-bundle prediction, and again at sign time (covers precomputed or stale analyses). New pure decision `IPAResignService.expiredCertBlockReason`: blocks when either the keychain identity's `notAfter` **or** the authoritative DER copy of the certificate embedded in the provisioning profile is past due — the embedded copy catches a stale profile even when keychain metadata is missing. Unknown expiry does not block (matches the macOS auto-select policy); "expires soon" stays advisory (⚠ badge). `ProvisioningProfile` now parses `notAfter` from each `DeveloperCertificates` DER (`developerCertNotAfters`, `certNotAfter(forSHA1:)` — case-insensitive; an undecodable DER still contributes its SHA-1 to the cert-in-profile pre-flight but claims no date). Files: `IPAResignService.swift`, `ProvisioningProfile.swift`.
+- **Nested-bundle entitlement preservation (macOS signing).** `signNestedBundles` previously signed helpers/XPC services/extensions without `--entitlements` whenever extraction failed — silently stripping entitlements that existed (the signature verifies; the app breaks at runtime). Extraction is now fail-closed (`nestedEntitlementDecision`: an extraction failure on a bundle that reports entitlements is a hard stop), and after signing each nested bundle the written entitlements are re-read and every intended key verified present. File: `CodeSigningOperations.swift`.
+- **Per-bundle post-sign entitlement verification (iOS re-signing).** The intended-vs-written entitlement check (`writtenEntitlementNotes`) now runs for every signed provisioning bundle — nested `.appex` and Watch apps included, not just the main app. Dropped keys or an unverifiable re-read surface as **Degraded** instead of passing silently. File: `IPAResignService.swift`.
+
+### Fixed
+
+- **`SignaroCLI validate` hang.** `NotarizationRequirementsChecker.runShellCommand` used a bespoke `Process` + `waitUntilExit` that deterministically lost the exit notification, hanging `validate` forever; it also had a latent pipe deadlock on outputs over 64 KB. It now delegates to `LocalProcessRunner` like the rest of the app. The GUI's comprehensive-validation flow shares this path and is protected by the same fix. File: `NotarizationRequirementsChecker.swift`.
+- **Auth-mode picker binding (follow-up to 1.7.3).** `NotarizationCredentials.authModeBinding` now reads and writes the `authModeRaw` storage directly instead of routing through the computed `authMode` property. File: `DataModels.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.4`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.4`.
+- New test file `SignaroTests/NestedEntitlementPreservationTests.swift`; suite now 174 tests across 23 classes (all green).
+
+---
+
+## 5.5 Build 1.7.3 — 2026-07-05
+
+### New
+
+- **Connected-device integration (`devicectl`).** New shared service `ConnectedDeviceService.swift` wraps `xcrun devicectl` (Xcode 15+, iOS 17+ devices paired via Xcode/Finder). Two GUI features build on it:
+  - **Check This Mac's Devices** — in the UDID coverage section, one click fills the coverage field with the UDID of every device paired with this Mac (deduplicated, preserving hand-typed entries). Rows for known devices are annotated with device name and connection state. Manual pasting remains fully supported. File: `IPAAnalysisCard.swift`.
+  - **Install on Device…** — after a successful re-sign of an Ad Hoc/Development/Enterprise IPA, installs the output IPA directly onto a connected device: the ground-truth verification that a re-sign worked. Blocked installs are explained up front (device not connected, UDID not in profile, Developer Mode off). File: `IPAAnalysisCard.swift` (DeviceInstallSheet).
+- **CLI `devices list` and `ios install`.** `SignaroCLI devices list` prints every device known to this Mac (name, model, OS, UDID, connection state, Developer Mode). `SignaroCLI ios install <ipa|app> --device <udid-or-name>` installs onto a device via devicectl; exits 69 with devicectl's error when unreachable/rejected. File: `CLICommandRunner.swift`.
+- **Read-only App Store Connect device registry (`devices registered`).** New shared service `ASCClient.swift` (ES256 JWT via CryptoKit, no dependencies; GET endpoints only — device registration and profile regeneration deliberately out of scope). `SignaroCLI devices registered --key-id <K> --issuer-id <I> --key-path <p8>` lists the team's registered devices; `--udid <u1,u2>` distinguishes "registered but profile predates it — regenerate profile" from "never registered — registering consumes annual quota". Requires an ASC API key with App Manager/Admin role (403 explained for notarization-only Developer keys). File: `CLICommandRunner.swift`.
+- **Certificate revocation check (`identities list --check-revocation`).** New shared service `CertificateRevocationChecker.swift`: one OCSP-enabled SecTrust evaluation per identity. A revoked certificate has valid dates and signs cleanly but fails later at Gatekeeper/notarization — this catches it up front. Soft-fail: only an affirmative "revoked" verdict reports as revoked; network trouble reports "unconfirmed", never a false alarm. Opt-in flag (network operation). Files: `CLICommandRunner.swift`, `CLIModels.swift` (new `revocation` field in identity JSON payload), `CLIParser.swift`.
+- **In-app Help additions.** New sections: "Connected Devices & Install on Device" and "Team Device Registry (App Store Connect)" (including step-by-step ASC API key creation with the App Manager role caveat); CLI Identities section documents `--check-revocation`. File: `HelpSheet.swift`.
+
+### Fixed
+
+- **"Publishing changes from within view updates" from the auth-mode picker.** The credential dialogs re-identify their subtree on auth-mode change (`.id(credentials.authMode)`), so the AppKit-backed picker is torn down and rebuilt mid-update — and the new picker re-writes its unchanged selection into the binding while the view update is still in flight, republishing through `authMode`'s `@AppStorage`-backed setter. The five duplicated `Binding(get:set:)` constructions are replaced by one shared `NotarizationCredentials.authModeBinding` whose setter drops no-op writes, breaking the re-entrant publish. Files: `DataModels.swift`, `NotarizationCredentialDialog.swift`, `StatusCredentialDialog.swift`, `NotarizationWorkflowDialog.swift`, `AppDistributionWorkflowDialog.swift`, `PkgDistributionWorkflowDialog.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.3`. `MARKETING_VERSION` `5.5`.
+- CLI version string `5.5.1.7.3` (also corrects the stale `--version` output that still reported 1.7.1 in the 1.7.2 binary).
+- New files: `Signaro/Services/ConnectedDeviceService.swift`, `Signaro/Services/ASCClient.swift`, `Signaro/Services/CertificateRevocationChecker.swift` (Foundation/Security/CryptoKit-only shared services; included in both Signaro and SignaroCLI targets).
+- `CertificateRevocationChecker.swift` uses `@preconcurrency import Security` (framework lacks Sendable annotations; SecTrust is confined to a single evaluation queue).
+
+---
+
 ## 5.5 Build 1.7.2 — 2026-06-29
 
 ### Fixed
