@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.7 (2026-07-05)**
+**Current version: 5.5 Build 1.7.8 (2026-07-06)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-177)
+- [What's New](#whats-new-in-version-55-build-178)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,13 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.7
+## What's New in Version 5.5 Build 1.7.8
+
+### In-app Help catches up with the app (Build 1.7.8)
+
+- **Certificate renewal, fully documented.** A step-by-step "Renewing an Expiring Certificate" guide covers the Renew… flow end to end — CSR generation with the private key created in *this* Mac's login keychain (and why the issued `.cer` must be opened on the same Mac), portal upload with the same certificate type, profile regeneration afterward, and how the diagnostic explains an in-flight or misdirected renewal.
+- **Lifecycle indicators explained** — the 90-day model behind the countdown pill, the *type · trust · expiry* summary line, and the `.mobileprovision` banner, on both tabs and in Auto mode.
+- **Every remaining surface covered** — new sections for the Validation Mode toggle (Detailed vs Quick), the Certificate Diagnostic's three finding types (duplicates, certificates missing their private key, renewal keys awaiting a certificate), and resuming interrupted batch workflows; the Safety Guards section now lists the expired-certificate, revocation, and expired-profile hard stops, and Distribution Workflows documents Create DMG's appearance customization.
 
 ### iOS tab lifecycle parity, expired-profile hard stop (Build 1.7.7)
 
@@ -285,7 +291,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.7
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.8
 SignaroCLI --help
 ```
 
@@ -293,7 +299,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.7)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.8)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -932,11 +938,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.7 |
-| Build date | 2026-07-05 |
+| Current version | 5.5 Build 1.7.8 |
+| Build date | 2026-07-06 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.7 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.7` |
+| `CURRENT_PROJECT_VERSION` | 1.7.8 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.8` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 218 tests across 27 classes in `SignaroTests` |

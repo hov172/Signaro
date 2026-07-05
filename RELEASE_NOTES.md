@@ -1,5 +1,19 @@
 # Release Notes
 
+## 5.5 Build 1.7.8 — 2026-07-06
+
+### Documentation
+
+- **In-app Help: certificate renewal and lifecycle, fully documented.** New sections: "Renewing an Expiring Certificate" (the Renew… flow end to end — CSR generation with the private key created in this Mac's login keychain and why the issued `.cer` must be opened on the same Mac; portal upload with the same certificate type; profile regeneration; the diagnostic's "missing its private key" / "awaiting a certificate" states) and "Certificate & Profile Lifecycle Indicators" (the 90-day model, urgency-only pill, *type · trust · expiry* line, `.mobileprovision` banner, Auto-mode behavior, daily notification check). File: `HelpSheet.swift`.
+- **In-app Help: remaining surfaces covered.** New sections for "Validation Mode: Detailed vs Quick", "Certificate Diagnostic (Stethoscope)" (duplicates, orphaned certificates, awaiting renewal keys — with fixes), and "Resuming Interrupted Workflows" (checkpoint banner semantics). "Cross-Team & Capability Safety Guards" updated with the expired-certificate, OCSP-revocation, and expired-profile hard stops; "Reading the iOS Analysis Card" updated with the regenerate link and Auto-mode picker summaries; "Distribution Workflows" documents Create DMG's appearance customization. File: `HelpSheet.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.8`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.8`.
+- No code changes — content-only release over 1.7.7. Suite 218 tests across 27 classes (all green).
+
+---
+
 ## 5.5 Build 1.7.7 — 2026-07-05
 
 ### New
