@@ -37,6 +37,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 - **Expired-certificate hard stop for iOS re-signing.** An expired signing certificate signs cleanly and passes local `codesign --verify`, but the resulting IPA fails to install on every device. Re-signing with one is now **Blocked** at analysis (with the expiry date and remediation in the message) and refused again at sign time. The check reads the certificate's expiry from the keychain *and* from the authoritative DER copy embedded in the provisioning profile — so a stale profile whose embedded certificate has expired is caught even when keychain metadata is missing. Expired identities remain visible in the picker with their ⚠ EXPIRED tag so the situation is explainable; "expires soon" remains advisory.
 - **Nested-bundle entitlement preservation (macOS signing).** Helpers, XPC services, and extensions inside a `.app` now get fail-closed entitlement handling: if their existing entitlements cannot be extracted, signing stops instead of silently stripping them, and after signing each nested bundle Signaro re-reads what was actually written and verifies every intended entitlement key survived.
 - **Per-bundle post-sign entitlement verification (iOS re-signing).** The intended-vs-written entitlement check now runs for every nested `.appex` and Watch bundle, not just the main app — dropped keys surface as a Degraded status instead of passing silently.
+- **Certificate revocation blocking in the signing flows.** The OCSP revocation checker (previously opt-in via `SignaroCLI identities list --check-revocation`) is now consulted automatically: iOS re-sign analysis runs it concurrently with the rest of the analysis and shows **Blocked** on an affirmative revocation, sign time re-enforces it, and the notarization readiness check treats a revoked selected certificate as a critical issue — before a doomed notarize round-trip. Soft-fail is preserved: only an affirmative "revoked" verdict blocks; network trouble or an unreachable responder never does.
 - **Fixed: `SignaroCLI validate` hang.** `validate` (and the GUI's comprehensive validation, which shares the code path) could hang indefinitely due to a lost process-exit notification in a bespoke process runner; it also had a latent deadlock on outputs over 64 KB. Both are gone — the checker now uses the same hardened process runner as the rest of the app.
 
 ### Connected devices, team registry, and revocation checks (Build 1.7.3)
@@ -921,7 +922,7 @@ Key design constraints:
 | CLI version string | `SignaroCLI 5.5 Build 1.7.4` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 174 tests across 23 classes in `SignaroTests` |
+| Test suite | 178 tests across 24 classes in `SignaroTests` |
 
 ---
 
