@@ -1,5 +1,24 @@
 # Release Notes
 
+## 5.5 Build 1.7.5 — 2026-07-05
+
+### New
+
+- **Consolidated certificate metadata line.** The picker's "Selected: \<type\> certificate" and "This certificate is trusted." rows are replaced by one line: *type · trust · exact expiry* — "Developer ID Application · Trusted · Valid until Jul 5, 2027". Severity tracks the worst of trust and expiry: amber with date + countdown inside the 90-day window ("Expires Aug 6, 2026 — 32 days"), red when expired or expiry is unknown, and "NOT trusted" escalates even a date-healthy certificate — the summary line can never look healthier than the status pill. New pure `CertificateMetadata.line(certificateType:trusted:evaluation:)`, unit-tested (6 cases). Files: `CertificateViews.swift`.
+- **Renew… with built-in CSR generation.** When the selected certificate leaves the healthy window, a Renew… menu appears next to the picker. *Generate CSR & Open Portal…* generates a 2048-bit RSA key pair permanently in the login keychain (labeled "Signaro renewal key — \<cert\>"; permanence is load-bearing — the certificate Apple issues against the CSR pairs with this key to form a working identity), writes a PEM `.certSigningRequest` via save panel, reveals it in Finder, and opens the developer portal's create-certificate page. *Open Developer Portal* is the plain deep link. New `CSRGenerator` (app target): hand-rolled PKCS#10 DER (macOS has no public CSR API) — SHA256withRSA self-signature, CN-only subject (Apple replaces it on issuance). DER primitives tested against known byte vectors; the full CSR is verified end-to-end by `openssl req -verify` in tests. Files: `CSRGenerator.swift`, `CertificateViews.swift`.
+
+### Fixed
+
+- **Certificate status pill never rendered.** The countdown pill (added in 1.7.1's lifecycle work) was placed inside the certificate picker's `Menu` label; the AppKit-backed menu button flattens its label to image + text and silently drops styled subviews, so the capsule never drew — while the adjacent trust icon and name survived, masking the bug. The pill now sits in the picker row after the menu, where SwiftUI owns the rendering, and shows from the advisory window onward ("32 days" … "Expired") — deliberately quiet when healthy now that the metadata line always carries the date. Verified live in the running app. File: `CertificateViews.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.5`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.5`.
+- New files: `Signaro/Services/CSRGenerator.swift` (Signaro target only), `SignaroTests/CSRGeneratorTests.swift`, `SignaroTests/CertificateStatusPillTests.swift`. Suite now 190 tests across 25 classes (all green).
+- Superseded 1.7.2/1.7.3 artifacts removed from `dist/` (still on their GitHub releases and in git history).
+
+---
+
 ## 5.5 Build 1.7.4 — 2026-07-05
 
 ### New

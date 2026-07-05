@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.4 (2026-07-05)**
+**Current version: 5.5 Build 1.7.5 (2026-07-05)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-174)
+- [What's New](#whats-new-in-version-55-build-175)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,13 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.4
+## What's New in Version 5.5 Build 1.7.5
+
+### Certificate lifecycle at a glance, and in-app renewal (Build 1.7.5)
+
+- **Expiry always one glance away.** The certificate picker's status rows are consolidated into a single metadata line — *type · trust · exact expiry* ("Developer ID Application · Trusted · Valid until Jul 5, 2027"). Inside the 90-day window the line turns amber and names the date and countdown; expired turns red; an untrusted certificate escalates the line even when its dates are fine — the summary can never look healthier than the warning pill above it.
+- **Status pill now actually appears — and only when it matters.** The countdown pill next to the picker never rendered before: it lived inside the menu button's label, which macOS flattens to icon + text, silently dropping styled views. It now sits beside the picker and appears from the 90-day advisory window onward ("32 days", "Expired") — quiet when healthy, so its arrival is the signal.
+- **Renew… from the app.** When the selected certificate is expiring or expired, a Renew… menu appears: *Generate CSR & Open Portal…* creates a 2048-bit RSA key pair **in your login keychain** (so the certificate Apple issues pairs into a working identity), saves a portal-ready `.certSigningRequest`, reveals it in Finder, and opens the developer portal's create-certificate page. CSR generation is built in (PKCS#10, verified against `openssl req -verify`) — no Keychain Access round-trip.
 
 ### Signing safety hardening and CLI validate fix (Build 1.7.4)
 
@@ -268,7 +274,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.4
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.5
 SignaroCLI --help
 ```
 
@@ -276,7 +282,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.4)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.5)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -915,14 +921,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.4 |
+| Current version | 5.5 Build 1.7.5 |
 | Build date | 2026-07-05 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.4 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.4` |
+| `CURRENT_PROJECT_VERSION` | 1.7.5 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.5` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 178 tests across 24 classes in `SignaroTests` |
+| Test suite | 190 tests across 25 classes in `SignaroTests` |
 
 ---
 
