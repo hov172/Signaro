@@ -1,5 +1,24 @@
 # Release Notes
 
+## 5.5 Build 1.7.9 — 2026-07-09
+
+### New
+
+- **Post-renewal certificate cleanup.** Once a renewed certificate's replacement is confirmed present and healthy (same Team ID and certificate type, different serial, later non-expired expiry), Signaro now offers a **Delete…** action for the superseded one — a hint row in the certificate picker, and a new "Renewed — Safe to Clean Up" section in the stethoscope diagnostic. The action removes the full identity (certificate + private key) via `SecItemDelete` after an explicit destructive confirmation naming both certificates, and is unreachable unless a confirmed replacement already exists, so it can never strand signing capability. New pure `CertificateLifecycleMonitor.renewalSupersessions(identities:now:)` detects the pairing; new `IdentityManager.deleteIdentity(_:)` performs the deletion (persistent-ref match, falling back to SHA-1 enumeration). Files: `CertificateLifecycleMonitor.swift`, `IdentityManager.swift`, `CertificateViews.swift`.
+
+### Fixed
+
+- **Daily certificate-expiry check could evaluate a stale, already-deleted certificate.** The daily background check (`scheduleCertificateDailyCheckIfNeeded`) read `viewModel.identities`, a cached array only refreshed at app launch — a certificate removed any other way (Keychain Access, `security` CLI, or before the in-app delete feature existed) kept re-triggering "expiring/expired" notifications indefinitely for a certificate no longer in the keychain. `identitiesProvider` now calls `IdentityManager.fetchAll()` fresh on every tick (immediate at launch, then every 24h) and writes the result back into `viewModel.identities`, so the picker/diagnostic UI also stays in sync for long-lived sessions. File: `MainContentView.swift`.
+- **Delivered expiry notifications never got retracted.** A delivered macOS notification is never cleared automatically — not even by rebuilding or relaunching the app — so a certificate that was since deleted or renewed to healthy left its "expiring/expired" banner visible in Notification Center indefinitely. `notifyExpiringCertificates` now queries `getDeliveredNotifications` live each cycle and retracts any `cert-expiry-…` banner no longer backed by a currently warning/imminent/expired certificate, regardless of which build originally delivered it. File: `MainContentViewModel.swift`.
+- **"Signaro switched certificates" notification re-fired on every app launch.** This separate notification path (`maybeNotifyExpiredFallback`, fired when auto-select falls back from an expired "last used" certificate to a healthy one) deduped via a plain in-memory `Set` that reset to empty every relaunch. Since the persisted "last used" pointer (`lastUsedApplicationCertId`/`lastUsedInstallerCertId`) only advances when a full distribution workflow is explicitly confirmed, an auto-selected fallback that was never "confirmed" that way left the pointer stuck on the expired certificate — so every fresh launch re-triggered the same notification. The dedup guard (`notifiedExpiredCertIds`) now persists to `UserDefaults`, and a new `retractStaleExpiredFallbackNotifications` clears any already-delivered stale `cert-fallback-…` banner the same way the expiry-notification retraction does. File: `MainContentViewModel.swift`.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.9`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.9`.
+- Suite now 228 tests across 29 classes (all green) — adds `CertificateLifecycleMonitorTests` (8 tests covering `renewalSupersessions` matching rules) and `IdentityManagerDeleteTests` (2 tests covering `deleteIdentity`'s keychain-free error path).
+
+---
+
 ## 5.5 Build 1.7.8 — 2026-07-06
 
 ### Documentation

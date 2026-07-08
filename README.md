@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.8 (2026-07-06)**
+**Current version: 5.5 Build 1.7.9 (2026-07-09)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-178)
+- [What's New](#whats-new-in-version-55-build-179)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,14 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.8
+## What's New in Version 5.5 Build 1.7.9
+
+### Post-renewal certificate cleanup, and three notification bugs fixed (Build 1.7.9)
+
+- **Delete a superseded certificate right from the app.** After renewing a certificate, the old one used to just sit in the keychain until it naturally expired — nothing distinguished "already renewed, safe to delete" from "still needs action," and Signaro had no delete capability at all. It now detects when a certificate has a healthy replacement (same Team ID and certificate type, later non-expired expiry) and offers a **Delete…** action — in the picker's hint row and in a new "Renewed — Safe to Clean Up" section of the stethoscope diagnostic. The action is gated on that confirmed pairing existing (it's unreachable for a certificate with no detected replacement, so it can never strand signing capability), requires an explicit destructive confirmation naming both certificates, and removes the full identity (certificate + private key) via `SecItemDelete`. Files: `CertificateLifecycleMonitor.swift` (new `renewalSupersessions`), `IdentityManager.swift` (new `deleteIdentity`), `CertificateViews.swift`, `HelpSheet.swift`.
+- **Fixed: the daily certificate-expiry check could evaluate a stale, already-deleted certificate.** The daily background check read a cached in-memory identity list that was only refreshed at app launch — a certificate removed any other way (Keychain Access, `security` CLI) kept re-triggering "expiring/expired" notifications for a certificate no longer in the keychain. It now re-queries the keychain live on every check instead of trusting the cache. File: `MainContentView.swift`.
+- **Fixed: expiry notifications never got retracted once delivered.** A delivered macOS notification is never cleared automatically — not even by rebuilding or relaunching the app — so a certificate that was since deleted or renewed to healthy would leave its banner visible indefinitely. The daily check now reconciles Notification Center's actual delivered list against current certificate state and retracts anything stale, regardless of which build originally delivered it. File: `MainContentViewModel.swift`.
+- **Fixed: the "Signaro switched certificates" notification re-fired on every app launch.** This separate notification (shown when Signaro auto-falls-back from an expired "last used" certificate to a healthy one) used an in-memory-only dedup guard that reset every relaunch, while the persisted "last used" pointer only advances when a full distribution workflow is explicitly confirmed — so an unconfirmed auto-selected fallback re-triggered the same notification indefinitely. The dedup guard now persists, and a matching retraction pass clears any already-delivered stale copy. File: `MainContentViewModel.swift`.
 
 ### In-app Help catches up with the app (Build 1.7.8)
 
@@ -257,7 +264,8 @@ A dedicated **iOS Re-sign** tab (and matching CLI commands) re-signs iOS `.ipa` 
 - **Workflow-aware auto-select (v4.7+).** Distribution dialog openings trigger `bestIdentity(for:)`, which filters identities by workflow type, excludes expired certificates (but not expiring-imminently ones), and prefers the identity last used for that specific workflow.
 - **Per-workflow identity history.** App distribution and PKG distribution each maintain an independent last-used identity key, preventing cross-workflow history pollution.
 - **Certificate Status Pill.** The selected Developer ID identity displays a days-until-expiry pill with escalating color: neutral ≥ 90 days; advisory 30–89; warning 7–29; error < 7 or expired.
-- **Expiry monitoring and notifications.** `CertificateLifecycleMonitor` evaluates every discovered Developer ID identity on launch and on a daily schedule. Approaching-expiry conditions post macOS User Notifications (permission requested on first launch) and surface inline banners in the distribution dialogs.
+- **Expiry monitoring and notifications.** `CertificateLifecycleMonitor` evaluates every discovered Developer ID identity live against the keychain on launch and on a daily schedule, and reconciles already-delivered notifications against current state so a renewed or removed certificate's banner doesn't linger.
+- **Post-renewal cleanup (v5.5 Build 1.7.9+).** Once a renewed certificate's replacement is confirmed healthy (same Team ID and type, later non-expired expiry), Signaro offers a **Delete…** action for the old one — in the picker hint and in the stethoscope diagnostic's "Renewed — Safe to Clean Up" section — removing the full identity (certificate + private key) after an explicit destructive confirmation. Never reachable without a confirmed replacement, so it can't strand signing capability.
 
 ### Working Folders
 
@@ -291,7 +299,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.8
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.9
 SignaroCLI --help
 ```
 
@@ -299,7 +307,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.8)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.9)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -938,14 +946,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.8 |
-| Build date | 2026-07-06 |
+| Current version | 5.5 Build 1.7.9 |
+| Build date | 2026-07-09 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.8 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.8` |
+| `CURRENT_PROJECT_VERSION` | 1.7.9 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.9` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 218 tests across 27 classes in `SignaroTests` |
+| Test suite | 228 tests across 29 classes in `SignaroTests` |
 
 ---
 
