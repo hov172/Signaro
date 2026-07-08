@@ -1,5 +1,18 @@
 # Release Notes
 
+## 5.5 Build 1.7.10 — 2026-07-09
+
+### Fixed
+
+- **Renewal CSR save panel always suggested the same filename.** The save panel defaulted to `Signaro-Renewal.certSigningRequest` regardless of which certificate was being renewed — renewing more than one certificate type in the same session/folder meant every save offered to overwrite the previous one. The suggested filename is now derived from the certificate's type and team name/ID (e.g. `Developer ID Application - Jesus Ayala (N859JA9UCJ).certSigningRequest`), falling back to the generic name when no identity is selected.
+
+### Build
+
+- `CURRENT_PROJECT_VERSION` `1.7.10`. `MARKETING_VERSION` `5.5`. CLI version string `SignaroCLI 5.5 Build 1.7.10`.
+- Suite now 232 tests across 30 classes (all green).
+
+---
+
 ## 5.5 Build 1.7.9 — 2026-07-09
 
 ### New

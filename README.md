@@ -6,11 +6,11 @@
 
 Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
-**Current version: 5.5 Build 1.7.9 (2026-07-09)**
+**Current version: 5.5 Build 1.7.10 (2026-07-09)**
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-179)
+- [What's New](#whats-new-in-version-55-build-1710)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -30,7 +30,11 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ---
 
-## What's New in Version 5.5 Build 1.7.9
+## What's New in Version 5.5 Build 1.7.10
+
+### Renewal CSR filename matches the certificate (Build 1.7.10)
+
+- **Fixed: the renewal CSR save panel always suggested the same filename.** Renewing an expiring certificate opened a save panel defaulting to `Signaro-Renewal.certSigningRequest` regardless of which certificate was being renewed — renewing more than one certificate type in the same folder meant every save offered to overwrite the last one, with no way to tell from the filename which CSR belonged to which cert. The suggested filename is now derived from the certificate being renewed (e.g. `Developer ID Application - Jesus Ayala (N859JA9UCJ).certSigningRequest`), falling back to the generic name only when no certificate is selected.
 
 ### Post-renewal certificate cleanup, and three notification bugs fixed (Build 1.7.9)
 
@@ -299,7 +303,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.9
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.10
 SignaroCLI --help
 ```
 
@@ -307,7 +311,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.9)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.10)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -946,14 +950,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.9 |
+| Current version | 5.5 Build 1.7.10 |
 | Build date | 2026-07-09 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.9 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.9` |
+| `CURRENT_PROJECT_VERSION` | 1.7.10 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.10` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 228 tests across 29 classes in `SignaroTests` |
+| Test suite | 232 tests across 30 classes in `SignaroTests` |
 
 ---
 
