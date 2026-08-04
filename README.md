@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-https://github.com/user-attachments/assets/c69549fb-394c-4410-9759-49be9668edb8
+https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 
 
