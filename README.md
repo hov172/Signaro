@@ -972,3 +972,6 @@ Key design constraints:
 
 - [GitHub](https://github.com/hov172)
 - Slack: **@Hov172** · Discord: **Jay172_**
+
+
+Disclaimer Signaro is an independent, free macOS utility developed for code signing. This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with any digital signage companies, brands, or entities operating under the same or similar names.
