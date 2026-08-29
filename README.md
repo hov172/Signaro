@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.11 (2026-08-28)**
+**Current version: 5.5 Build 1.7.12 (2026-08-29)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -39,7 +39,12 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.11
+## What's New in Version 5.5 Build 1.7.12
+
+### False certificate-expiry notifications fixed (Build 1.7.12)
+
+- Signaro no longer warns that a certificate has expired — and that "signing will fail" — for certificates it never signs with. Expiry notifications previously covered every identity in your keychain, so an unrelated expired item such as a `localhost` TLS certificate produced a daily alarm. Only genuine signing certificates are considered now.
+- Any incorrect banner already sitting in Notification Center is retracted automatically on the next check.
 
 ### DMG layout preview reliability and layout script authoring (Build 1.7.11)
 
@@ -47,8 +52,6 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 - **Load Layout… / Save Layout…** are back in the GUI for all three DMG surfaces, restoring the layout-script JSON round-trip that had been command-line-only. Loading and re-saving a layout is lossless, including fields the interface has no controls for.
 - `signarocli` and the app now derive DMG window geometry identically, and background images are measured in true pixels rather than DPI-scaled points — Retina-tagged artwork no longer produces a half-size window.
 - Preferences → "Reset Preview Preferences" now restores the Create DMG preview too.
-
-**Known issue:** certificate expiry notifications are evaluated against every identity in the keychain, not only code-signing certificates, so an unrelated expired certificate can produce a false "Signing will fail" banner. Signing itself is unaffected; a fix is targeted for the next build.
 
 ### Renewal CSR filename matches the certificate (Build 1.7.10)
 
@@ -321,7 +324,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.11
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.12
 SignaroCLI --help
 ```
 
@@ -329,7 +332,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.11)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.12)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -968,11 +971,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.11 |
+| Current version | 5.5 Build 1.7.12 |
 | Build date | 2026-07-09 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.11 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.11` |
+| `CURRENT_PROJECT_VERSION` | 1.7.12 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.12` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 232 tests across 30 classes in `SignaroTests` |
