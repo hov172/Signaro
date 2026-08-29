@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.12 (2026-08-29)**
+**Current version: 5.5 Build 1.7.13 (2026-08-29)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -39,7 +39,11 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.12
+## What's New in Version 5.5 Build 1.7.13
+
+### DMG creation no longer hangs on a busy Finder (Build 1.7.13)
+
+- Applying the Finder layout to a new DMG is now bounded by an explicit timeout. Previously an unresponsive Finder could stall DMG creation indefinitely; a slow step is now reported as a layout warning alongside the finished DMG instead of freezing the build.
 
 ### False certificate-expiry notifications fixed (Build 1.7.12)
 
@@ -324,7 +328,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.12
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.13
 SignaroCLI --help
 ```
 
@@ -332,7 +336,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.12)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.13)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -971,11 +975,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.12 |
+| Current version | 5.5 Build 1.7.13 |
 | Build date | 2026-07-09 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.12 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.12` |
+| `CURRENT_PROJECT_VERSION` | 1.7.13 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.13` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 232 tests across 30 classes in `SignaroTests` |
