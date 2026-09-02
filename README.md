@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.13 (2026-08-29)**
+**Current version: 5.5 Build 1.7.14 (2026-09-01)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1710)
+- [What's New](#whats-new-in-version-55-build-1714)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,14 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.13
+## What's New in Version 5.5 Build 1.7.14
+
+### Configuration profile (`.mobileconfig`) signing now works (Build 1.7.14)
+
+- **Fixed: signing a `.mobileconfig` always failed** with *"this identity cannot be used for signing code."* Configuration profiles are CMS/PKCS#7 documents rather than executable code, so they cannot be signed by `codesign` at all — and the installer certificate they require is exactly the kind `codesign` refuses. Profiles now sign through `security cms`, the tool Apple documents for the format.
+- **Fixed: a correctly signed profile still displayed as "Not signed."** Signature inspection used `codesign`, which reports every CMS document as unsigned no matter how good its signature is. Signaro now reads the signer, signature status, and Team ID out of the profile itself.
+- **Fixed: unsigning a profile failed the same way.** Removing a profile's signature now decodes the original document back out, byte for byte.
+- All three fixes apply to `signarocli` as well as the app.
 
 ### DMG creation no longer hangs on a busy Finder (Build 1.7.13)
 
@@ -217,12 +224,12 @@ Complete overhaul of the standalone Create DMG dialog — full workflow parity w
 - **In-place and copy-based signing** using `codesign` with hardened-runtime entitlements (`--options=runtime`) for notarization compatibility. Supports Developer ID Application and Developer ID Installer certificate classes.
 - **Split-aware signing for mixed selections.** When the file list contains both app-type (`.app`, `.dmg`) and installer-type (`.pkg`, `.mobileconfig`) files, each file is signed with the certificate class that matches its type.
 
-| File Type | Extension | Certificate Class |
-|:---|:---|:---|
-| **App Bundles** | `.app` | Developer ID Application |
-| **Disk Images** | `.dmg` | Developer ID Application |
-| **Installers** | `.pkg` | Developer ID Installer |
-| **Config Profiles** | `.mobileconfig` | Developer ID Installer |
+| File Type | Extension | Certificate Class | Signing Tool |
+|:---|:---|:---|:---|
+| **App Bundles** | `.app` | Developer ID Application | `codesign` |
+| **Disk Images** | `.dmg` | Developer ID Application | `codesign` |
+| **Installers** | `.pkg` | Developer ID Installer | `productsign` |
+| **Config Profiles** | `.mobileconfig` | Developer ID Installer | `security cms` |
 
 - **Extended attributes cleaning** (`xattr -cr`) before signing, ensuring no quarantine flags or third-party metadata interferes with notarization assessment.
 - **Batch signing engine with checkpoint resume (v4.8+).** `BatchSigningCoordinator` processes files sequentially, publishes per-file live progress, saves a checkpoint after each success, and pauses on failure so the run is resumable from the exact failure point at next launch.
@@ -328,7 +335,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.13
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.14
 SignaroCLI --help
 ```
 
@@ -336,7 +343,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.13)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.14)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -975,14 +982,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.13 |
-| Build date | 2026-07-09 |
+| Current version | 5.5 Build 1.7.14 |
+| Build date | 2026-09-01 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.13 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.13` |
+| `CURRENT_PROJECT_VERSION` | 1.7.14 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.14` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 232 tests across 30 classes in `SignaroTests` |
+| Test suite | 256 tests across 32 classes in `SignaroTests` |
 
 ---
 
