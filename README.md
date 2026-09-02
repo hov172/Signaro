@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.14 (2026-09-01)**
+**Current version: 5.5 Build 1.7.15 (2026-09-01)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1714)
+- [What's New](#whats-new-in-version-55-build-1715)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,12 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.14
+## What's New in Version 5.5 Build 1.7.15
+
+### The right certificate is pre-selected again (Build 1.7.15)
+
+- **Fixed: the app could open with a certificate selected that signs nothing.** When no certificate had been used before, Signaro fell back to whichever identity the keychain happened to list first — often not a Developer ID certificate at all. It now prefers your last used certificate, then the first identity that actually matches a signing workflow.
+- **Fixed: adding a file to a mixed selection skipped certificate auto-detection.** Adding a `.mobileconfig` to a list that already contained a `.app` or `.dmg` left the picker untouched, so the wrong certificate could stay selected. Auto-detection now runs for mixed selections too, while still leaving a certificate you deliberately chose alone. Signing itself was never affected — each file is signed with the certificate class matching its type regardless of what the picker shows.
 
 ### Configuration profile (`.mobileconfig`) signing now works (Build 1.7.14)
 
@@ -335,7 +340,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.14
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.15
 SignaroCLI --help
 ```
 
@@ -343,7 +348,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.14)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.15)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -982,14 +987,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.14 |
+| Current version | 5.5 Build 1.7.15 |
 | Build date | 2026-09-01 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.14 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.14` |
+| `CURRENT_PROJECT_VERSION` | 1.7.15 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.15` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 256 tests across 32 classes in `SignaroTests` |
+| Test suite | 267 tests across 33 classes in `SignaroTests` |
 
 ---
 
