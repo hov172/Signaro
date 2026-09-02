@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.16 (2026-09-01)**
+**Current version: 5.5 Build 1.7.17 (2026-09-01)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1716)
+- [What's New](#whats-new-in-version-55-build-1717)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,12 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.16
+## What's New in Version 5.5 Build 1.7.17
+
+### Certificates are identified by Extended Key Usage (Build 1.7.17)
+
+- **Fixed: "3rd Party Mac Developer Installer" was reported as a "Mac Developer" certificate.** Certificate types were guessed by substring-matching the certificate's name, and that name contains "Mac Developer" — so an App Store installer certificate was shown as a development code-signing one. Signaro now reads each certificate's Extended Key Usage, which states its purpose outright, and falls back to the name only for certificates that carry no such extension.
+- Expiry-notification scope is unchanged; only the type a certificate reports has been corrected.
 
 ### Configuration profiles now use the application certificate (Build 1.7.16)
 
@@ -348,7 +353,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.16
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.17
 SignaroCLI --help
 ```
 
@@ -356,7 +361,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.16)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.17)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -995,14 +1000,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.16 |
+| Current version | 5.5 Build 1.7.17 |
 | Build date | 2026-09-01 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.16 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.16` |
+| `CURRENT_PROJECT_VERSION` | 1.7.17 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.17` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 272 tests across 34 classes in `SignaroTests` |
+| Test suite | 286 tests across 35 classes in `SignaroTests` |
 
 ---
 
