@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.15 (2026-09-01)**
+**Current version: 5.5 Build 1.7.16 (2026-09-01)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1715)
+- [What's New](#whats-new-in-version-55-build-1716)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,13 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.15
+## What's New in Version 5.5 Build 1.7.16
+
+### Configuration profiles now use the application certificate (Build 1.7.16)
+
+- **Changed: `.mobileconfig` files are paired with Developer ID Application, not Developer ID Installer.** Profiles were routed to the installer certificate because `security cms` signs them with it without error — which turns out not to mean it is correct. A Developer ID Installer certificate carries a *critical* Extended Key Usage limited to Apple's installer-package OID with no `codeSigning`; Developer ID Application carries `codeSigning`, and a profile signed with it shows as Verified on device. In the CLI, `.mobileconfig` now takes `--app-identity-*` instead of `--pkg-identity-*`.
+- **Fixed: the analysis panel warned against the certificate the app had just chosen.** Its recommendation for profiles excluded the very certificate Signaro auto-selected for them, so a working setup carried a permanent orange warning. The rule lived in four places and now has one source of truth; the warning explains the Extended Key Usage reason.
+- **Fixed: pressing Distribute with only a profile selected suggested the DMG workflow.** It now explains that profiles are neither notarized nor stapled, and points at the Sign action.
 
 ### The right certificate is pre-selected again (Build 1.7.15)
 
@@ -48,7 +54,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ### Configuration profile (`.mobileconfig`) signing now works (Build 1.7.14)
 
-- **Fixed: signing a `.mobileconfig` always failed** with *"this identity cannot be used for signing code."* Configuration profiles are CMS/PKCS#7 documents rather than executable code, so they cannot be signed by `codesign` at all — and the installer certificate they require is exactly the kind `codesign` refuses. Profiles now sign through `security cms`, the tool Apple documents for the format.
+- **Fixed: signing a `.mobileconfig` always failed** with *"this identity cannot be used for signing code."* Configuration profiles are CMS/PKCS#7 documents rather than executable code, so they cannot be signed by `codesign` at all. Profiles now sign through `security cms`, the tool Apple documents for the format. (The certificate they are paired with changed in 1.7.16 — see above.)
 - **Fixed: a correctly signed profile still displayed as "Not signed."** Signature inspection used `codesign`, which reports every CMS document as unsigned no matter how good its signature is. Signaro now reads the signer, signature status, and Team ID out of the profile itself.
 - **Fixed: unsigning a profile failed the same way.** Removing a profile's signature now decodes the original document back out, byte for byte.
 - All three fixes apply to `signarocli` as well as the app.
@@ -227,14 +233,16 @@ Complete overhaul of the standalone Create DMG dialog — full workflow parity w
 <img src="docimages/Signaro_Main_With_Signed_App.png" alt="Code Signing in Signaro" width="800">
 
 - **In-place and copy-based signing** using `codesign` with hardened-runtime entitlements (`--options=runtime`) for notarization compatibility. Supports Developer ID Application and Developer ID Installer certificate classes.
-- **Split-aware signing for mixed selections.** When the file list contains both app-type (`.app`, `.dmg`) and installer-type (`.pkg`, `.mobileconfig`) files, each file is signed with the certificate class that matches its type.
+- **Split-aware signing for mixed selections.** When the file list contains both app-type (`.app`, `.dmg`, `.mobileconfig`) and installer-type (`.pkg`) files, each file is signed with the certificate class that matches its type.
+
+> **Why profiles use the application certificate.** A `.mobileconfig` is a CMS/PKCS#7 document, so `security cms` will sign it with any identity in the keychain — including a Developer ID Installer certificate. That is not evidence the certificate is correct. A Developer ID Installer certificate carries a *critical* Extended Key Usage limited to Apple's installer-package OID (`1.2.840.113635.100.4.13`) with no `codeSigning`, whereas Developer ID Application, Apple Distribution, and Apple Development all carry `codeSigning`. A profile signed with a Developer ID Application certificate shows as Verified on device; the Apple Development and Apple Distribution certificates sign correctly but show as Unverified unless the developer program's intermediate certificates are already installed. For production, a publicly trusted code-signing certificate from a commercial CA remains the usual choice.
 
 | File Type | Extension | Certificate Class | Signing Tool |
 |:---|:---|:---|:---|
 | **App Bundles** | `.app` | Developer ID Application | `codesign` |
 | **Disk Images** | `.dmg` | Developer ID Application | `codesign` |
 | **Installers** | `.pkg` | Developer ID Installer | `productsign` |
-| **Config Profiles** | `.mobileconfig` | Developer ID Installer | `security cms` |
+| **Config Profiles** | `.mobileconfig` | Developer ID Application | `security cms` |
 
 - **Extended attributes cleaning** (`xattr -cr`) before signing, ensuring no quarantine flags or third-party metadata interferes with notarization assessment.
 - **Batch signing engine with checkpoint resume (v4.8+).** `BatchSigningCoordinator` processes files sequentially, publishes per-file live progress, saves a checkpoint after each success, and pauses on failure so the run is resumable from the exact failure point at next launch.
@@ -340,7 +348,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.15
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.16
 SignaroCLI --help
 ```
 
@@ -348,7 +356,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.15)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.16)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -367,7 +375,7 @@ COMMANDS:
   notarize log         Fetch the notarization processing log.
   dmg create           Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
   distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG.
-  distribute pkg       End-to-end workflow for .pkg/.mobileconfig: sign → notarize → staple.
+  distribute pkg       End-to-end workflow for .pkg: sign → notarize → staple.
   folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name>.
   ios analyze <ipa>    Dry-run an iOS .ipa re-sign: predict Valid/Degraded/Blocked, auto-detected profile + cert, and reasons. No changes made.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
@@ -506,7 +514,7 @@ SignaroCLI validate MyApp.app MyInstaller.pkg --mode quick --json
 
 #### `sign <path> [<path> ...]`
 
-Sign one or more files. When the selection mixes `.app`/`.dmg` and `.pkg`/`.mobileconfig` files, each file is signed with the certificate class that matches its type. Pass `--clean-attributes` to strip extended attributes before signing.
+Sign one or more files. When the selection mixes `.app`/`.dmg`/`.mobileconfig` and `.pkg` files, each file is signed with the certificate class that matches its type. Pass `--clean-attributes` to strip extended attributes before signing.
 
 ```bash
 SignaroCLI sign MyApp.app --identity-name "Developer ID Application: Acme (TEAMID)"
@@ -902,7 +910,7 @@ Handled as success in v3.5+. Re-running a workflow on a file that was previously
 Open More (···) → Entitlement Inspector… and drop both the signed `.app` and the `.mobileprovision` profile. Keys present in one but absent from the other are highlighted in orange. Common causes: entitlements declared in the profile but not added to the `.entitlements` file in Xcode, or vice versa.
 
 **Mixed signing selections behave unexpectedly.**
-Signaro signs each file with the certificate class that matches its type (`.app`/`.dmg` → Developer ID Application; `.pkg`/`.mobileconfig` → Developer ID Installer). Distribution workflows require a homogeneous selection — if you mix `.app` and `.pkg` files and then press Distribute, the preflight alert will offer to open the Working Folder Manager, where you can organize the files and run separate distribution passes.
+Signaro signs each file with the certificate class that matches its type (`.app`/`.dmg`/`.mobileconfig` → Developer ID Application; `.pkg` → Developer ID Installer). Distribution workflows require a homogeneous selection — if you mix `.app` and `.pkg` files and then press Distribute, the preflight alert will offer to open the Working Folder Manager, where you can organize the files and run separate distribution passes.
 
 **"No installed iOS profile found for com.example.BundleID."**
 The profile scanner checks both `~/Library/MobileDevice/Provisioning Profiles` (legacy) and `~/Library/Developer/Xcode/UserData/Provisioning Profiles` (macOS 13+). If you see this: open Xcode → Settings → Accounts, select your Apple ID, and click **Download Manual Profiles** to install the profile; or download it manually from the Apple Developer portal. The profile must cover the app's bundle ID, be for the iOS platform, and be within its expiry date.
@@ -987,14 +995,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.15 |
+| Current version | 5.5 Build 1.7.16 |
 | Build date | 2026-09-01 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.15 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.15` |
+| `CURRENT_PROJECT_VERSION` | 1.7.16 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.16` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 267 tests across 33 classes in `SignaroTests` |
+| Test suite | 272 tests across 34 classes in `SignaroTests` |
 
 ---
 
