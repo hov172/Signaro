@@ -5,12 +5,12 @@
 </div>
 
 
-Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.mobileconfig` files, plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
+Signaro is a professional-grade, privacy-first macOS application for code signing, notarization, stapling, and distribution of `.app`, `.pkg`, `.dmg`, and `.zip` files — plus signing of `.mobileconfig` configuration profiles, which Apple neither notarizes nor staples — plus **iOS `.ipa` re-signing** — swap in a fresh provisioning profile and re-sign every bundle inside-out, with auto-detection of the matching profile and certificate and safety guards that prevent data-losing or capability-stripping re-signs. Built with SwiftUI and a strict MVVM architecture, it shares a single operations layer between the GUI and a native companion CLI, so every guarantee that holds in the app holds in automation as well. All processing is local; no credentials, file contents, or metadata leave the device except as required by Apple's notarization service.
 
 
 
 
-**Current version: 5.5 Build 1.7.17 (2026-09-01)**
+**Current version: 5.5 Build 1.7.18 (2026-09-01)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1717)
+- [What's New](#whats-new-in-version-55-build-1718)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,12 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.17
+## What's New in Version 5.5 Build 1.7.18
+
+### Notarization controls are disabled for configuration profiles (Build 1.7.18)
+
+- **Fixed: Notarize, Staple Tickets and the main Distribute action were offered for a `.mobileconfig`.** Profiles can be signed but never notarized or stapled — `stapler` reports it "is incapable of working with Configuration Profile files", and Apple's notary service accepts only `.zip`, `.pkg` and `.dmg`. Those controls are now disabled when the selection contains nothing but profiles, with a tooltip explaining why. A profile alongside a `.app` still leaves notarization available for the `.app`.
+- **Fixed: `.mobileconfig` was accepted as a notarizable format** and would have been uploaded. It now fails validation locally, in the app and in `signarocli notarize submit`, with an explanation instead of a round trip to Apple.
 
 ### Certificates are identified by Extended Key Usage (Build 1.7.17)
 
@@ -353,7 +358,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.17
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.18
 SignaroCLI --help
 ```
 
@@ -361,7 +366,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.17)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.18)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -1000,14 +1005,14 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.17 |
+| Current version | 5.5 Build 1.7.18 |
 | Build date | 2026-09-01 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.17 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.17` |
+| `CURRENT_PROJECT_VERSION` | 1.7.18 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.18` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 286 tests across 35 classes in `SignaroTests` |
+| Test suite | 294 tests across 36 classes in `SignaroTests` |
 
 ---
 
