@@ -12,6 +12,15 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 **Current version: 5.5 Build 1.7.20 (2026-09-25)**
 
+**Install with Homebrew:**
+
+```sh
+brew tap hov172/signaro
+brew install --cask signaro
+```
+
+Update later with `brew upgrade --cask signaro`. Prefer a direct download? See [Installation](#installation).
+
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
