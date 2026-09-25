@@ -32,6 +32,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
   - [End-to-End Example (Profile-Based)](#end-to-end-example-profile-based)
 - [Notarization Credential Modes](#notarization-credential-modes)
 - [In-App Help](#in-app-help)
+- [Installation](#installation)
 - [System Requirements](#system-requirements)
 - [Troubleshooting](#troubleshooting)
 - [Architecture Overview](#architecture-overview)
@@ -903,6 +904,33 @@ Open the Help sheet at any time from the **Help** menu or the **?** button in th
 - OTA Manifest Generation — Ad Hoc & Enterprise over-the-air install via `manifest.plist` + `install.html`
 - Reading the Analysis Card — every field in the pre-flight card explained
 - iOS CLI — all `signarocli ios` subcommands with flags
+
+---
+
+## Installation
+
+### Homebrew (recommended)
+
+```sh
+brew tap hov172/signaro
+brew install --cask signaro
+```
+
+This installs `Signaro.app` into `/Applications` and links the bundled command-line tool as `signarocli`. Update alongside your other software with:
+
+```sh
+brew upgrade --cask signaro
+```
+
+The cask is published from the tap [hov172/homebrew-signaro](https://github.com/hov172/homebrew-signaro) and always points at the latest [GitHub release](https://github.com/hov172/Signaro/releases/latest).
+
+### Direct download
+
+Every [release](https://github.com/hov172/Signaro/releases/latest) ships three notarized, stapled artifacts:
+
+- `Signaro-<version>.dmg` — drag-and-drop app
+- `Signaro-<version>-Installer.pkg` — app plus CLI installer
+- `SignaroCLI-<version>.pkg` — standalone CLI
 
 ---
 
