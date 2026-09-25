@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.19 (2026-09-25)**
+**Current version: 5.5 Build 1.7.20 (2026-09-25)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -39,7 +39,11 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.19
+## What's New in Version 5.5 Build 1.7.20
+
+### Preferences tabs fit the window on macOS 27 (Build 1.7.20)
+
+- **Fixed: on macOS 27 the Preferences sheet was clipped on the left, with the title and the first tabs cut off.** The segmented control introduced in 1.7.19 is an AppKit control, and on macOS 27 its seven segments demand more width than the sheet has, pushing the whole content sideways. The tabs are now plain SwiftUI buttons that share the available width, so they fit on every supported macOS version. macOS 26 was unaffected.
 
 ### Preferences tabs are readable again (Build 1.7.19)
 
@@ -362,7 +366,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.19
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.20
 SignaroCLI --help
 ```
 
@@ -370,7 +374,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.19)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.20)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -1009,11 +1013,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.19 |
+| Current version | 5.5 Build 1.7.20 |
 | Build date | 2026-09-25 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.19 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.19` |
+| `CURRENT_PROJECT_VERSION` | 1.7.20 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.20` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 294 tests across 36 classes in `SignaroTests` |
