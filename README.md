@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.18 (2026-09-01)**
+**Current version: 5.5 Build 1.7.19 (2026-09-25)**
 
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## Table of Contents
 
-- [What's New](#whats-new-in-version-55-build-1718)
+- [What's New](#whats-new-in-version-55-build-1719)
 - [Core Features](#core-features)
   - [Code Signing](#code-signing)
   - [Notarization](#notarization)
@@ -39,7 +39,11 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ---
 
-## What's New in Version 5.5 Build 1.7.18
+## What's New in Version 5.5 Build 1.7.19
+
+### Preferences tabs are readable again (Build 1.7.19)
+
+- **Fixed: the Preferences tab titles overlapped in the centre of the window.** The tab bar was a stock `TabView`, which on macOS 26+ and 27 collapses inside a sheet, so all seven titles were drawn on top of one another and the tabs could not be used. The tabs are now a segmented control, which lays out the same on every supported macOS version.
 
 ### Notarization controls are disabled for configuration profiles (Build 1.7.18)
 
@@ -358,7 +362,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.18
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.19
 SignaroCLI --help
 ```
 
@@ -366,7 +370,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.18)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.19)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -1005,11 +1009,11 @@ Key design constraints:
 
 | Field | Value |
 |-------|-------|
-| Current version | 5.5 Build 1.7.18 |
-| Build date | 2026-09-01 |
+| Current version | 5.5 Build 1.7.19 |
+| Build date | 2026-09-25 |
 | `MARKETING_VERSION` | 5.5 |
-| `CURRENT_PROJECT_VERSION` | 1.7.18 |
-| CLI version string | `SignaroCLI 5.5 Build 1.7.18` |
+| `CURRENT_PROJECT_VERSION` | 1.7.19 |
+| CLI version string | `SignaroCLI 5.5 Build 1.7.19` |
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
 | Test suite | 294 tests across 36 classes in `SignaroTests` |
