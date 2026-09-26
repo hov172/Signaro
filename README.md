@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.20 (2026-09-25)**
+**Current version: 5.5 Build 1.7.21 (2026-09-25)**
 
 **Install with Homebrew:**
 
@@ -51,10 +51,13 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.20 — 2026-09-25**
+**5.5 Build 1.7.21 — 2026-09-25**
 
-- **Now installable with Homebrew.** `brew tap hov172/signaro && brew install --cask signaro`; keep current with `brew upgrade --cask signaro`. See [Installation](#installation).
-- **Fixed: the Preferences sheet was clipped on the left on macOS 27.** The tab bar is now plain SwiftUI and fits the sheet on every supported macOS version.
+- **iOS re-sign guards are stricter.** An IPA whose original team cannot be proven is blocked (the team is now also read from the code signature, so App Store and TestFlight builds without an embedded profile still resolve). A codesign failure while reading the original entitlements blocks instead of passing the parity check. App Store profiles are never auto-selected; prefix wildcards such as `TEAM.com.acme.*` match; a wildcard keychain group keeps the app's existing groups under that prefix.
+- **CLI fixes.** `folder sign --recursive` and `--dry-run` no longer swallow the directory argument; `folder sign` honors `--app-identity-name` / `--pkg-identity-name`; `ios resign --json` keeps stdout to one JSON object (progress goes to stderr); `--limit`, `--timeout`, `--poll-interval` are validated; `xcode-phase` no longer hangs on large projects and emits a script `distribute app` accepts.
+- **`distribute app --no-dmg`** stops after sign/notarize/staple. Headless `distribute app` no longer hangs when Finder automation is unavailable; the DMG ships with a layout warning instead.
+- **`history list` works.** History is persisted to `Submission_History.jsonl` and survives relaunch, in the CLI and the app.
+- **Hardening.** Notarization checks no longer build shell strings from paths; the package workflow honors Cancel; already-signed apps without hardened runtime are re-signed instead of skipped; a DMG layout with duplicate placement names is a validation error instead of a crash.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -122,7 +125,7 @@ The **iOS Re-sign** tab (and the matching `ipa` CLI commands) re-signs an iOS `.
 - **Add and auto-match.** Drop an `.ipa`, use **Choose…**, or press ⌘O (type-aware, switches to this tab). Signaro scans both provisioning-profile directories, picks the profile whose app ID and team match the app, and pre-selects the matching Apple Development or Distribution certificate. A Development / Ad Hoc / Enterprise selector narrows the match; **Refresh Profiles** re-scans without restarting.
 - **Pre-flight analysis before anything is signed.** Each queued `.ipa` shows a predicted **Valid / Degraded / Blocked** badge with the resolved profile and identity, original team, entitlements, and an entitlement diff that lists changed, dropped, and added keys with their values. Wildcard profiles, expired profiles, and App Store profiles are called out with an explanation.
 - **Inside-out signing.** Frameworks and dylibs first (code-only, no profile or entitlements), then app extensions and Watch apps, then the main app, each with a fresh `embedded.mobileprovision` and entitlements built from the profile. Every re-sign ends with `codesign --verify --deep --strict` and a read-back of the embedded entitlements.
-- **Safety guards that fail closed.** A cross-team re-sign would install as a new app and lose user data, so it is blocked, including when the original team cannot be read. Capability parity is enforced at the value level: any entitlement the original app had must survive with the same value; gaining new ones is allowed, losing any is blocked.
+- **Safety guards that fail closed.** A cross-team re-sign would install as a new app and lose user data, so it is blocked, including when the original team cannot be read (the team comes from the embedded profile, or from the code signature's `TeamIdentifier` for App Store and TestFlight builds). Capability parity is enforced at the value level: any entitlement the original app had must survive with the same value; gaining new ones is allowed, losing any is blocked. If codesign cannot read the original entitlements at all, the re-sign is blocked rather than checked against nothing. App Store profiles are never auto-selected because they only install through Apple's servers.
 - **Per-bundle control.** App extensions and Watch apps each show their own matched-profile row. Drop a `.mobileprovision` onto any row to override that bundle's profile.
 - **Device tooling.** Paste UDIDs to check coverage against the profile's device list, or ask this Mac for its connected devices. After a successful Ad Hoc, Development, or Enterprise re-sign, **Install on Device…** installs the output via `devicectl`, and **OTA Manifest…** generates the `manifest.plist` for over-the-air installation.
 - **Batch handling.** Queue several `.ipa`s: analysis runs concurrently, re-signing runs sequentially and isolates failures, a summary bar reports Valid / Degraded / Failed, and **Cancel** stops cleanly after the current app. Reveal any result in Finder.
@@ -169,7 +172,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.20
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.21
 SignaroCLI --help
 ```
 
@@ -177,7 +180,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.20)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.21)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -195,9 +198,9 @@ COMMANDS:
   notarize wait        Poll for a notarization verdict.
   notarize log         Fetch the notarization processing log.
   dmg create           Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
-  distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG.
+  distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG. --no-dmg stops after the app.
   distribute pkg       End-to-end workflow for .pkg: sign → notarize → staple.
-  folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name>.
+  folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name> or --app-/--pkg-identity-name.
   ios analyze <ipa>    Dry-run an iOS .ipa re-sign: predict Valid/Degraded/Blocked, auto-detected profile + cert, and reasons. No changes made.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
   ios resign <ipa>     Re-sign an iOS .ipa with a fresh profile. Auto-detects profile + cert; --identity-name/-sha1 to override, --output <path> for a single .ipa.
@@ -385,7 +388,7 @@ Flags:
 - `--identity-name` / `--identity-sha1` — override auto-detected certificate
 - `--output <path>` — explicit output path (single `.ipa` only)
 - `--ota-url <https://…/app.ipa>` — HTTPS URL where the re-signed IPA will be hosted. Generates `manifest.plist` and `install.html` alongside the output IPA for over-the-air distribution. The `itms-services://` install link is printed to stdout. Single IPA only (each IPA needs its own hosted URL). Applicable to Ad Hoc, Development, and Enterprise profiles.
-- `--json` — machine-readable output
+- `--json` — machine-readable output: stdout is exactly one JSON object; progress lines (`analyzing…`, `signing…`, `→ Bundle`) go to stderr. A failed OTA manifest write fails the run.
 
 ```bash
 SignaroCLI ios resign MyApp.ipa
@@ -475,7 +478,7 @@ SignaroCLI notarize submit MyApp.zip \
 
 #### `notarize wait <request-id>`
 
-Poll a previously submitted notarization request ID and exit when Apple returns a verdict. Exits `65` on rejection.
+Poll a previously submitted notarization request ID and exit when Apple returns a verdict. Exits `65` on rejection. `--timeout` (minutes) and `--poll-interval` (seconds) must be whole numbers ≥ 1; anything else is a usage error (exit 64).
 
 ```bash
 SignaroCLI notarize wait <request-id> --keychain-profile MyProfile
@@ -548,7 +551,7 @@ Sample `--check-revocation` output:
 
 #### `folder sign <dir>` (v5.0.1.4+)
 
-Sign all signable files in a directory. Files are auto-routed to the correct certificate class by extension. Supports recursive traversal (default), dry-run mode, explicit identity override, and extended-attributes cleaning.
+Sign all signable files in a directory. Files are auto-routed to the correct certificate class by extension: `.pkg` uses the installer identity, everything else the application identity. Identity resolution per class: `--identity <name-or-sha1>` forces one identity for every file; otherwise `--app-identity-name` / `--app-identity-sha1` and `--pkg-identity-name` / `--pkg-identity-sha1` apply; otherwise the class's identity is used only if the keychain holds exactly one, and files are skipped with a hint when several qualify. `--recursive` descends into subfolders (bundles are not entered), `--dry-run` reports what would be signed, `--clean-attributes` strips extended attributes first. A signing failure exits `69`.
 
 ```bash
 SignaroCLI folder sign ./build \
@@ -562,15 +565,15 @@ SignaroCLI folder sign ./artifacts --dry-run --json
 
 #### `history list` (v5.0.1.4+)
 
-Browse the local submission history captured by `SubmissionLogger`. Returns entries in reverse-chronological order. Use the request ID from a past notarization record to feed directly into `notarize log` or `staple --uuid`.
+Browse the local submission history captured by `SubmissionLogger`. Entries are persisted to `~/Documents/Signaro Logs/Submission_History.jsonl` (one JSON line per operation, newest 500 kept), so runs from the app and from earlier CLI invocations are all visible. Returns entries in reverse-chronological order. Use the request ID from a past notarization record to feed directly into `notarize log` or `staple --uuid`. `--limit` must be a whole number ≥ 1.
 
 ```bash
 SignaroCLI history list
 SignaroCLI history list --limit 50 --json
-SignaroCLI history list --operation APP_DISTRIBUTION --json
+SignaroCLI history list --operation distribute-app --json
 ```
 
-Available `--operation` values: `SIGNING`, `NOTARIZATION`, `STAPLING`, `APP_DISTRIBUTION`, `PKG_DISTRIBUTION`, `WORKING_FOLDER`.
+`--operation` accepts the short names `sign`, `notarize`, `staple`, `distribute-app`, `distribute-pkg`, or any raw operation name such as `CODE_SIGNING`, `APP_DISTRIBUTION`, `PKG_DISTRIBUTION`, `WORKING_FOLDER`.
 
 #### `credentials test`
 
@@ -586,7 +589,9 @@ SignaroCLI credentials test \
 
 #### `distribute app`
 
-Full App Distribution workflow: sign → notarize → staple → create DMG → sign DMG → notarize DMG → staple DMG. The input must be an `.app` bundle. Pass `--skip-notarize` to produce a signed, un-notarized DMG (useful for offline development workflows).
+Full App Distribution workflow: sign → notarize → staple → create DMG → sign DMG → notarize DMG → staple DMG. The input must be an `.app` bundle. Pass `--skip-notarize-and-staple` to produce a signed, un-notarized DMG (useful for offline development workflows). Pass `--no-dmg` to stop after the app is signed, notarized and stapled; no output directory is needed then. An app that is already signed by the selected team with a secure timestamp **and** the hardened runtime skips the signing step; anything less is re-signed.
+
+Headless use (CI, SSH): Finder icon layout is applied through `osascript` with a 60-second limit. Without Finder automation permission the DMG is still created and signed and the result carries a "Finder layout warning".
 
 ```bash
 SignaroCLI distribute app \
@@ -605,7 +610,10 @@ SignaroCLI distribute app \
   --identity-sha1 ABC123 \
   --keychain-profile MyProfile \
   --output-dir ~/Desktop \
-  --skip-notarize
+  --skip-notarize-and-staple
+
+SignaroCLI distribute app --app MyApp.app --identity-name "Developer ID Application: Acme" \
+  --keychain-profile MyProfile --no-dmg
 ```
 
 #### `distribute pkg`
@@ -809,7 +817,7 @@ A wildcard provisioning profile (`iOS Team Provisioning Profile: *`) was used. C
 **Notarization returns "in progress" for longer than expected.**
 Apple's notarization service processing time varies. Signaro polls every 30 seconds for up to 30 attempts (15 minutes total). If the submission is still active after the timeout, the request ID is displayed so you can resume later with `SignaroCLI staple --uuid <id> <path> --keychain-profile MyProfile`.
 
-**"No request ID available for status checking" on skip-notarize workflows.**
+**"No request ID available for status checking" on `--skip-notarize-and-staple` workflows.**
 Fixed in 5.0 Build 1.1. Update to the latest build.
 
 **Certificate auto-select shows no identity even though a valid certificate exists.**
@@ -864,7 +872,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 294 tests across 36 classes in `SignaroTests` |
+| Test suite | 311 tests across 40 classes in `SignaroTests` |
 
 ---
 
