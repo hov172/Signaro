@@ -21,6 +21,8 @@ brew install --cask signaro
 
 Update later with `brew upgrade --cask signaro`. Prefer a direct download? See [Installation](#installation).
 
+Already installed from the DMG or pkg? Follow [Switching to Homebrew](#switching-from-the-dmg-or-installer-to-homebrew) first.
+
 
 https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
