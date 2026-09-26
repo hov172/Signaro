@@ -741,6 +741,7 @@ Already have Signaro installed from the DMG or the installer pkg? Homebrew will 
 ```sh
 # 1. Quit Signaro, then remove the old app
 rm -rf /Applications/Signaro.app
+sudo pkgutil --forget com.gmail.ayala.solutions.Signaro 2>/dev/null || true   # only if installed from the pkg
 
 # 2. Only if you installed the CLI pkg: remove its copy so the Homebrew one is used
 sudo rm -f /usr/local/bin/signarocli
