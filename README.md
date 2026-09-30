@@ -16,6 +16,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 ```sh
 brew tap hov172/signaro
+brew trust hov172/signaro   # Homebrew 5+ refuses third-party taps until you trust them
 brew install --cask signaro
 ```
 
@@ -725,6 +726,7 @@ Open the Help sheet at any time from the **Help** menu or the **?** button in th
 
 ```sh
 brew tap hov172/signaro
+brew trust hov172/signaro   # Homebrew 5+ refuses third-party taps until you trust them
 brew install --cask signaro
 ```
 
@@ -751,6 +753,7 @@ sudo pkgutil --forget com.gmail.ayala.solutions.Signaro.cli
 
 # 3. Install via Homebrew
 brew tap hov172/signaro
+brew trust hov172/signaro   # Homebrew 5+ refuses third-party taps until you trust them
 brew install --cask signaro
 ```
 
