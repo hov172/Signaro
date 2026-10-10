@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.27 (2026-10-10)**
+**Current version: 5.5 Build 1.7.28 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,10 +54,9 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.27 — 2026-10-10**
+**5.5 Build 1.7.28 — 2026-10-10**
 
-- **`distribute pkg` on an unsigned package** no longer carries the standalone validator's failure advice in its `--json` / `--verbose` pre-flight item; only pkgutil's status line remains.
-- **`--skip-notarize-and-staple` no longer requires credentials** on `distribute app` and `distribute pkg`.
+- **`distribute` step lines match across text, `--verbose` and `--json`.** JSON `items[]` is now byte-identical to the text lines; raw notarytool/stapler output moved to a new `steps[]` array, and `--verbose` prints it under each line. Skipped steps read `skipped (per settings)`.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -172,7 +171,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.27
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.28
 SignaroCLI --help
 ```
 
@@ -180,7 +179,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.27)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.28)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -618,7 +617,7 @@ SignaroCLI distribute app --app MyApp.app --app-identity-name "Developer ID Appl
 
 #### `distribute pkg`
 
-Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → staple → create a signed, notarized, stapled distribution DMG containing the signed package. The input must be a `.pkg` file. The DMG step is on by default and needs a Developer ID Application certificate via `--dmg-identity-name` / `--dmg-identity-sha1`; pass `--no-dmg` to stop after the stapled package, `--skip-dmg-sign` to leave the DMG unsigned, or `--skip-dmg-notarize` to sign it without notarizing. A missing DMG identity is rejected before anything is signed or notarized. `--pkg-identity-name` / `--pkg-identity-sha1` select the installer certificate (`--identity-name` / `--identity-sha1` are accepted as aliases). `--icon-x` and `--icon-y` position the PKG icon in the DMG layout. Outputs land beside the input package by default (the signed copy as `<name>-signed.pkg`); with `--output-dir <dir>` both the signed package (as `<name>.pkg`) and the DMG go there. Text mode prints one line per step; add `--verbose` for the full notarytool and stapler output, which `--json` always includes. `distribute pkg --help` lists every flag, and every other command answers `--help` with its own usage too.
+Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → staple → create a signed, notarized, stapled distribution DMG containing the signed package. The input must be a `.pkg` file. The DMG step is on by default and needs a Developer ID Application certificate via `--dmg-identity-name` / `--dmg-identity-sha1`; pass `--no-dmg` to stop after the stapled package, `--skip-dmg-sign` to leave the DMG unsigned, or `--skip-dmg-notarize` to sign it without notarizing. A missing DMG identity is rejected before anything is signed or notarized. `--pkg-identity-name` / `--pkg-identity-sha1` select the installer certificate (`--identity-name` / `--identity-sha1` are accepted as aliases). `--icon-x` and `--icon-y` position the PKG icon in the DMG layout. Outputs land beside the input package by default (the signed copy as `<name>-signed.pkg`); with `--output-dir <dir>` both the signed package (as `<name>.pkg`) and the DMG go there. Every mode prints the same one-line-per-step form; `--verbose` adds each step's raw notarytool and stapler output under its line, and `--json` carries the lines in `items` plus a `steps` array with each step's name, status, line, and raw output. `distribute pkg --help` lists every flag, and every other command answers `--help` with its own usage too.
 
 ```bash
 SignaroCLI distribute pkg \
@@ -875,7 +874,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 343 tests across 47 classes in `SignaroTests` |
+| Test suite | 344 tests across 47 classes in `SignaroTests` |
 
 ---
 
