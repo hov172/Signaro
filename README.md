@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.23 (2026-10-10)**
+**Current version: 5.5 Build 1.7.24 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,10 +54,9 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.23 — 2026-10-10**
+**5.5 Build 1.7.24 — 2026-10-10**
 
-- **`distribute pkg` notarizes and staples the DMG by default.** It used to be opt-in behind an undocumented flag, so the DMG around a correctly notarized package was rejected by Gatekeeper. `--skip-dmg-notarize` turns it off; `--skip-dmg-sign` implies it. The app's "Also Notarize & Staple DMG" toggle now defaults on.
-- **Clean staple output.** A successful `stapler staple` no longer prints the failure troubleshooting advice.
+- **One identity-flag convention across the CLI.** Typed flags (`--app-identity-name`, `--pkg-identity-name`, `--dmg-identity-name`, and their `-sha1` forms) are the documented spelling on every subcommand. The generic `--identity-name` / `--identity-sha1` works as an alias wherever the target type is unambiguous, including `distribute app` and `folder sign`. `folder sign --identity` keeps working as a silent alias.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -172,7 +171,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.23
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.24
 SignaroCLI --help
 ```
 
@@ -180,7 +179,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.23)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.24)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -200,7 +199,7 @@ COMMANDS:
   dmg create           Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
   distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG. --no-dmg stops after the app.
   distribute pkg       End-to-end workflow for .pkg: sign → notarize → staple → signed+notarized DMG (needs --dmg-identity-name, or --no-dmg). Run `distribute pkg --help` for flags.
-  folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name> or --app-/--pkg-identity-name.
+  folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --app-/--pkg-identity-name per class, or --identity-name for every file.
   ios analyze <ipa>    Dry-run an iOS .ipa re-sign: predict Valid/Degraded/Blocked, auto-detected profile + cert, and reasons. No changes made.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
   ios resign <ipa>     Re-sign an iOS .ipa with a fresh profile. Auto-detects profile + cert; --identity-name/-sha1 to override, --output <path> for a single .ipa.
@@ -226,7 +225,7 @@ EXAMPLES:
     --applications-alias --window-width 600 --window-height 400
 
   # Full automated app distribution (Sign -> Notarize -> Staple -> DMG)
-  SignaroCLI distribute app --app MyApp.app --identity-name "Developer ID" \
+  SignaroCLI distribute app --app MyApp.app --app-identity-name "Developer ID" \
     --keychain-profile "MyProfile" --output-dir ~/Desktop
 
   # Submit + wait using a stored notarytool profile
@@ -551,7 +550,7 @@ Sample `--check-revocation` output:
 
 #### `folder sign <dir>` (v5.0.1.4+)
 
-Sign all signable files in a directory. Files are auto-routed to the correct certificate class by extension: `.pkg` uses the installer identity, everything else the application identity. Identity resolution per class: `--identity <name-or-sha1>` forces one identity for every file; otherwise `--app-identity-name` / `--app-identity-sha1` and `--pkg-identity-name` / `--pkg-identity-sha1` apply; otherwise the class's identity is used only if the keychain holds exactly one, and files are skipped with a hint when several qualify. `--recursive` descends into subfolders (bundles are not entered), `--dry-run` reports what would be signed, `--clean-attributes` strips extended attributes first. A signing failure exits `69`.
+Sign all signable files in a directory. Files are auto-routed to the correct certificate class by extension: `.pkg` uses the installer identity, everything else the application identity. Identity resolution per class: `--identity-name` / `--identity-sha1` forces one identity for every file (`--identity <name-or-sha1>` is still accepted as an alias); otherwise `--app-identity-name` / `--app-identity-sha1` and `--pkg-identity-name` / `--pkg-identity-sha1` apply; otherwise the class's identity is used only if the keychain holds exactly one, and files are skipped with a hint when several qualify. `--recursive` descends into subfolders (bundles are not entered), `--dry-run` reports what would be signed, `--clean-attributes` strips extended attributes first. A signing failure exits `69`.
 
 ```bash
 SignaroCLI folder sign ./build \
@@ -612,7 +611,7 @@ SignaroCLI distribute app \
   --output-dir ~/Desktop \
   --skip-notarize-and-staple
 
-SignaroCLI distribute app --app MyApp.app --identity-name "Developer ID Application: Acme" \
+SignaroCLI distribute app --app MyApp.app --app-identity-name "Developer ID Application: Acme" \
   --keychain-profile MyProfile --no-dmg
 ```
 
@@ -875,7 +874,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 324 tests across 43 classes in `SignaroTests` |
+| Test suite | 328 tests across 44 classes in `SignaroTests` |
 
 ---
 
