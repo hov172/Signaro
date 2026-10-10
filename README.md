@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.22 (2026-10-10)**
+**Current version: 5.5 Build 1.7.23 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,12 +54,10 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.22 — 2026-10-10**
+**5.5 Build 1.7.23 — 2026-10-10**
 
-- **`credentials test` recognizes a valid keychain profile.** Apple's "Submission does not exist or does not belong to your team" reply is post-authentication and is now reported as success instead of "Unable to verify profile".
-- **`distribute pkg` fails fast on a missing DMG identity.** The DMG is created and signed by default; a run without `--dmg-identity-name` / `--dmg-identity-sha1` is rejected at argument parsing, before the package is signed or notarized, with `--no-dmg` and `--skip-dmg-sign` named as alternatives.
-- **`distribute pkg` accepts `--pkg-identity-name` / `--pkg-identity-sha1`**, matching `sign`; the missing-identity error names every accepted flag.
-- **`distribute pkg --help` and `distribute app --help`** print per-subcommand usage.
+- **`distribute pkg` notarizes and staples the DMG by default.** It used to be opt-in behind an undocumented flag, so the DMG around a correctly notarized package was rejected by Gatekeeper. `--skip-dmg-notarize` turns it off; `--skip-dmg-sign` implies it. The app's "Also Notarize & Staple DMG" toggle now defaults on.
+- **Clean staple output.** A successful `stapler staple` no longer prints the failure troubleshooting advice.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -174,7 +172,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.22
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.23
 SignaroCLI --help
 ```
 
@@ -182,7 +180,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.22)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.23)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -201,7 +199,7 @@ COMMANDS:
   notarize log         Fetch the notarization processing log.
   dmg create           Create professional DMGs with custom layouts, live preview, and auto-expanding bounds.
   distribute app       End-to-end workflow for .app: sign → notarize → staple → DMG. --no-dmg stops after the app.
-  distribute pkg       End-to-end workflow for .pkg: sign → notarize → staple → DMG (needs --dmg-identity-name, or --no-dmg). Run `distribute pkg --help` for flags.
+  distribute pkg       End-to-end workflow for .pkg: sign → notarize → staple → signed+notarized DMG (needs --dmg-identity-name, or --no-dmg). Run `distribute pkg --help` for flags.
   folder sign <dir>    Sign all signable files in a directory. Use --recursive, --dry-run, --identity <name> or --app-/--pkg-identity-name.
   ios analyze <ipa>    Dry-run an iOS .ipa re-sign: predict Valid/Degraded/Blocked, auto-detected profile + cert, and reasons. No changes made.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
@@ -620,7 +618,7 @@ SignaroCLI distribute app --app MyApp.app --identity-name "Developer ID Applicat
 
 #### `distribute pkg`
 
-Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → staple → create a signed distribution DMG containing the signed package. The input must be a `.pkg` file. The DMG step is on by default and needs a Developer ID Application certificate via `--dmg-identity-name` / `--dmg-identity-sha1`; pass `--no-dmg` to stop after the stapled package, or `--skip-dmg-sign` to leave the DMG unsigned. A missing DMG identity is rejected before anything is signed or notarized. `--pkg-identity-name` / `--pkg-identity-sha1` select the installer certificate (`--identity-name` / `--identity-sha1` are accepted as aliases). `--icon-x` and `--icon-y` position the PKG icon in the DMG layout. `distribute pkg --help` lists every flag.
+Full PKG Distribution workflow: sign `.pkg` with `productsign` → notarize → staple → create a signed, notarized, stapled distribution DMG containing the signed package. The input must be a `.pkg` file. The DMG step is on by default and needs a Developer ID Application certificate via `--dmg-identity-name` / `--dmg-identity-sha1`; pass `--no-dmg` to stop after the stapled package, `--skip-dmg-sign` to leave the DMG unsigned, or `--skip-dmg-notarize` to sign it without notarizing. A missing DMG identity is rejected before anything is signed or notarized. `--pkg-identity-name` / `--pkg-identity-sha1` select the installer certificate (`--identity-name` / `--identity-sha1` are accepted as aliases). `--icon-x` and `--icon-y` position the PKG icon in the DMG layout. `distribute pkg --help` lists every flag.
 
 ```bash
 SignaroCLI distribute pkg \
@@ -877,7 +875,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 320 tests across 43 classes in `SignaroTests` |
+| Test suite | 324 tests across 43 classes in `SignaroTests` |
 
 ---
 
