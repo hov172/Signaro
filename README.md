@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.29 (2026-10-10)**
+**Current version: 5.5 Build 1.7.30 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,10 +54,9 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.29 — 2026-10-10**
+**5.5 Build 1.7.30 — 2026-10-10**
 
-- **Notarize step lines always show the Request ID**, even when the input is staged out of a temporary directory.
-- **`--output-dir` with a trailing or doubled slash** no longer leaks into the DMG path.
+- **Documentation audit.** README CLI reference regenerated from the binary and brought to the typed identity-flag convention; test counts, PRD command names, and the in-app Help `sign` example corrected. No behavior change.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -172,7 +171,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.29
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.30
 SignaroCLI --help
 ```
 
@@ -180,7 +179,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.29)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.30)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -205,10 +204,11 @@ COMMANDS:
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
   ios resign <ipa>     Re-sign an iOS .ipa with a fresh profile. Auto-detects profile + cert; --identity-name/-sha1 to override, --output <path> for a single .ipa.
                        --distribution development|adhoc|enterprise|appstore  Filter profile matching to a specific distribution type.
-                       --ota-url <https://…/app.ipa>  Generate manifest.plist and install.html for OTA distribution.
+                       --ota-url <https://…/app.ipa>  Generate manifest.plist and install.html alongside the output IPA for OTA distribution.
   ios install <ipa>    Install a (re-signed) .ipa or .app onto a device: --device <udid-or-name>. Uses devicectl (iOS 17+, Xcode 15+).
   devices list         List devices known to this Mac via devicectl, with UDID, OS, connection state, and Developer Mode status.
-  devices registered   List devices registered to the team in App Store Connect (read-only ASC API; App Manager/Admin role). --udid <u1,u2> cross-checks specific UDIDs.
+  devices registered   List devices registered to the team in App Store Connect (read-only; needs an ASC API key with App Manager/Admin role).
+                       --udid <u1,u2>  Also report whether each given UDID is registered — distinguishes "profile is stale" from "device never registered".
   history list         Browse local submission history. Use --limit N and --operation <type>.
   credentials test     Verify notarization credentials without submitting.
   xcode-phase <proj>   Generate a Run Script Build Phase for an Xcode project.
@@ -232,7 +232,7 @@ EXAMPLES:
   # Submit + wait using a stored notarytool profile
   SignaroCLI notarize submit MyApp.app --keychain-profile "MyProfile" --wait
 
-  # Deferred staple flow using request UUID
+  # Deferred staple flow using request UUID + profile
   SignaroCLI notarize wait <request-id> --keychain-profile "MyProfile"
   SignaroCLI staple --uuid <request-id> MyApp.app --keychain-profile "MyProfile"
 
@@ -245,16 +245,18 @@ EXAMPLES:
     --pkg-identity-name "Developer ID Installer: Acme" \
     --clean-attributes
 
-  # Preview an iOS .ipa re-sign, then re-sign and generate OTA distribution files
-  SignaroCLI ios analyze MyApp.ipa --distribution adhoc
-  SignaroCLI ios resign MyApp.ipa --output ~/Desktop/MyApp.resigned.ipa \
-    --ota-url https://example.com/apps/MyApp.resigned.ipa
+  # Preview an iOS .ipa re-sign (auto-detects profile + cert), then re-sign it
+  SignaroCLI ios analyze MyApp.ipa
+  SignaroCLI ios resign MyApp.ipa --output ~/Desktop/MyApp.resigned.ipa
+
+  # Re-sign, then verify on hardware: install straight onto a connected iPhone
+  SignaroCLI devices list
+  SignaroCLI ios install ~/Desktop/MyApp.resigned.ipa --device 00008120-000A1B2C3D4E5F60
 
 GLOBAL OPTIONS:
   --json              Emit single JSON object to stdout.
   --help, -h          Show this help, or a subcommand's usage after its name (e.g. `sign --help`).
   --version           Show version information.
-
 CREDENTIAL OPTIONS (Notarization):
   --apple-id <id> --team-id <id> --password <pw>     Direct Apple ID auth.
   --keychain-profile <name>                           Auth via stored notarytool profile.
@@ -268,12 +270,11 @@ DMG CUSTOMIZATION OPTIONS:
   --text-size <points>     Label text size (default 12).
   --window-width <n>       Finder window width.
   --window-height <n>      Finder window height.
-  --icon-x <n>             X position of the source file icon in the DMG window.
-  --icon-y <n>             Y position of the source file icon in the DMG window.
+  --icon-x <n>            X position of the source file icon in the DMG window.
+  --icon-y <n>            Y position of the source file icon in the DMG window.
   --applications-alias     Include /Applications symlink in DMG (app workflows).
   --format <fmt>           Output format (compressed, highly-compressed, etc).
   --filesystem <fs>        Internal filesystem (APFS or HFS+).
-
 Bug Reports: Visit https://github.com/hov172/Signaro
 Documentation: Refer to README.md in the project root.
 ```
@@ -288,8 +289,8 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 | Flag | Description |
 |------|-------------|
 | `--json` | Emit a single structured JSON object to `stdout` instead of human-readable text. All commands support this flag. |
-| `--help`, `-h` | Print usage with examples and exit 0. |
-| `--version` | Print `SignaroCLI 5.0.1.5.5` and exit 0. |
+| `--help`, `-h` | Print the overview, or a command's own usage when it follows the command name (`sign --help`, `distribute pkg --help`), and exit 0. |
+| `--version` | Print `SignaroCLI 5.5 Build 1.7.30` and exit 0. |
 
 ---
 
@@ -299,7 +300,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 |:---|:---|:---|
 | `analyze` | Check signature, notarization, & entitlements | `SignaroCLI analyze MyApp.app --smart` |
 | `validate` | Pre-submission readiness check | `SignaroCLI validate MyApp.app --mode quick` |
-| `sign` | Sign one or more files (split-identity aware) | `SignaroCLI sign MyApp.app --identity-name "..."` |
+| `sign` | Sign one or more files (split-identity aware) | `SignaroCLI sign MyApp.app --app-identity-name "..."` |
 | `unsign` | Remove existing code signatures | `SignaroCLI unsign MyApp.app` |
 | `ios analyze` | Dry-run an iOS `.ipa` re-sign (predict + auto-detect) | `SignaroCLI ios analyze MyApp.ipa` |
 | `ios resign` | Re-sign an iOS `.ipa` with a fresh profile; optional `--ota-url` for OTA distribution files | `SignaroCLI ios resign MyApp.ipa --output My.resigned.ipa` |
@@ -310,7 +311,7 @@ The embedded variant (CLI binary inside `Signaro.app/Contents/Helpers/`) is buil
 | `notarize` | Submit, wait for, or log notarization | `SignaroCLI notarize submit MyApp.zip --wait` |
 | `staple` | Attach notarization ticket to files | `SignaroCLI staple MyApp.app` |
 | `dmg create` | Create customized disk images | `SignaroCLI dmg create --source App.app --icon-size 96` |
-| `distribute` | Full E2E pipeline (Sign → Notarize → DMG) | `SignaroCLI distribute app --app MyApp.app` |
+| `distribute` | Full E2E pipeline (sign → notarize → staple → signed, notarized DMG) for `.app` or `.pkg` | `SignaroCLI distribute pkg --pkg My.pkg --pkg-identity-name "..." --dmg-identity-name "..." --keychain-profile P` |
 | `identities list` | List Developer ID identities with expiry status; `--check-revocation` for OCSP verification | `SignaroCLI identities list --json` |
 | `credentials test` | Validate notarization credentials | `SignaroCLI credentials test --keychain-profile "..."` |
 | `history list` | Browse local submission history | `SignaroCLI history list --limit 20` |
@@ -589,14 +590,14 @@ SignaroCLI credentials test \
 
 #### `distribute app`
 
-Full App Distribution workflow: sign → notarize → staple → create DMG → sign DMG → notarize DMG → staple DMG. The input must be an `.app` bundle. Pass `--skip-notarize-and-staple` to produce a signed, un-notarized DMG (useful for offline development workflows). Pass `--no-dmg` to stop after the app is signed, notarized and stapled; no output directory is needed then. An app that is already signed by the selected team with a secure timestamp **and** the hardened runtime skips the signing step; anything less is re-signed.
+Full App Distribution workflow: sign → notarize → staple → create DMG → sign DMG → notarize DMG → staple DMG. The input must be an `.app` bundle. Pass `--skip-notarize-and-staple` to produce a signed, un-notarized DMG (useful for offline development workflows). Pass `--no-dmg` to stop after the app is signed, notarized and stapled; no output directory is needed then. An app that is already signed by the selected team with a secure timestamp **and** the hardened runtime skips the signing step; anything less is re-signed. `--app-identity-name` / `--app-identity-sha1` select the certificate (`--identity-name` / `--identity-sha1` are accepted as aliases). Output is one line per step; `--verbose` adds each step's raw output, and `--json` carries both in `items` and `steps`.
 
 Headless use (CI, SSH): Finder icon layout is applied through `osascript` with a 60-second limit. Without Finder automation permission the DMG is still created and signed and the result carries a "Finder layout warning".
 
 ```bash
 SignaroCLI distribute app \
   --app MyApp.app \
-  --identity-name "Developer ID Application: Acme (TEAMID)" \
+  --app-identity-name "Developer ID Application: Acme (TEAMID)" \
   --keychain-profile YourprofileName \
   --output-dir ~/Desktop \
   --volume-name "My App Installer" \
@@ -607,7 +608,7 @@ SignaroCLI distribute app \
 ```bash
 SignaroCLI distribute app \
   --app MyApp.app \
-  --identity-sha1 ABC123 \
+  --app-identity-sha1 ABC123 \
   --keychain-profile MyProfile \
   --output-dir ~/Desktop \
   --skip-notarize-and-staple
@@ -875,7 +876,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 346 tests across 47 classes in `SignaroTests` |
+| Test suite | 346 tests across 48 classes in `SignaroTests` |
 
 ---
 
