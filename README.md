@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.25 (2026-10-10)**
+**Current version: 5.5 Build 1.7.26 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,11 +54,9 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.25 — 2026-10-10**
+**5.5 Build 1.7.26 — 2026-10-10**
 
-- **Every CLI command has its own `--help`.** `sign --help`, `folder sign --help`, `staple --help`, `ios resign --help` and the rest print their own usage instead of the global overview.
-- **Quiet `distribute` output.** Text mode prints one line per step plus the final paths; `--verbose` (or `--json`) restores the full notarytool and stapler output. Staple success is a single line.
-- **Consistent `distribute pkg` outputs.** Both the signed package and the DMG land beside the input by default, or together in `--output-dir`, where the `-signed` suffix is dropped.
+- **Cleaner `distribute` output.** Every step line has the same shape (`Sign DMG: signed`, `Staple Package: stapled and validated`, …), the summary prints last, and an unsigned input package is described as the expected state rather than an error. `--json` output is unchanged.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -173,7 +171,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.25
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.26
 SignaroCLI --help
 ```
 
@@ -181,7 +179,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.25)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.26)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -876,7 +874,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 335 tests across 45 classes in `SignaroTests` |
+| Test suite | 341 tests across 46 classes in `SignaroTests` |
 
 ---
 
