@@ -10,7 +10,7 @@ Signaro is a professional-grade, privacy-first macOS application for code signin
 
 
 
-**Current version: 5.5 Build 1.7.28 (2026-10-10)**
+**Current version: 5.5 Build 1.7.29 (2026-10-10)**
 
 **Install with Homebrew:**
 
@@ -54,9 +54,10 @@ https://github.com/user-attachments/assets/2e520203-64b5-4f04-b43e-143ff1ceed0c
 
 ## What's New
 
-**5.5 Build 1.7.28 — 2026-10-10**
+**5.5 Build 1.7.29 — 2026-10-10**
 
-- **`distribute` step lines match across text, `--verbose` and `--json`.** JSON `items[]` is now byte-identical to the text lines; raw notarytool/stapler output moved to a new `steps[]` array, and `--verbose` prints it under each line. Skipped steps read `skipped (per settings)`.
+- **Notarize step lines always show the Request ID**, even when the input is staged out of a temporary directory.
+- **`--output-dir` with a trailing or doubled slash** no longer leaks into the DMG path.
 
 Full history for every build: [RELEASE_NOTES.md](RELEASE_NOTES.md) and [GitHub Releases](https://github.com/hov172/Signaro/releases).
 
@@ -171,7 +172,7 @@ xcodebuild build \
 Verify the build:
 
 ```bash
-SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.28
+SignaroCLI --version    # → SignaroCLI 5.5 Build 1.7.29
 SignaroCLI --help
 ```
 
@@ -179,7 +180,7 @@ SignaroCLI --help
 <summary>Click to view <code>SignaroCLI --help</code> output</summary>
 
 ```text
-OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.28)
+OVERVIEW: Signaro Command-Line Interface (v5.5.1.7.29)
 Advanced macOS Code Signing, Notarization, and Distribution.
 
 USAGE: SignaroCLI <command> [options]
@@ -874,7 +875,7 @@ Key design constraints:
 |-------|-------|
 | Platform | macOS 14.0+, Universal Binary |
 | Architecture | SwiftUI + MVVM, shared operations layer, full CLI parity |
-| Test suite | 344 tests across 47 classes in `SignaroTests` |
+| Test suite | 346 tests across 47 classes in `SignaroTests` |
 
 ---
 
