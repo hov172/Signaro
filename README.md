@@ -1,4 +1,4 @@
-# Signaro: Advanced macOS Code Signing, Notarization & iOS Re-signing Utility
+# <img src="docimages/app-icon.png" width="48" align="top" alt=""> Signaro: Advanced macOS Code Signing, Notarization & iOS Re-signing Utility
 
 <div align="center">
   <img src="docimages/Signaro_Main.png" alt="Signaro Main Interface" width="800">
